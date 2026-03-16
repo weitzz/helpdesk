@@ -2,7 +2,7 @@ import styled from 'styled-components'
 
 
 export const Content = styled.div`
-  margin-left: 200px;
+  margin-left: var(--sidebar-width, 200px);
   padding: 1px 16px;
 
   @media(max-width:700px){
@@ -19,38 +19,23 @@ export const Container = styled.div`
   border-radius: 4px;
   padding: 10px;
   align-items: center;
-
-  button{
-    background: transparent;
-    border-radius: 6px;
-   border: 1px solid #181c2e;
-    height: 40px;
-    padding: 6px 12px;
-    font-size: 1rem;
-    color: #181c2e;
-    cursor: pointer;
-    max-width: 600px;
-   transition: ease-in-out 0.6s;
-    &:hover{
-      background-color: #181c2e;
-      color: #f7f7f7;
-    }
-
-  }
+  justify-content: center;
 `;
 
 export const LabelAvatar = styled.label`
-  width:280px;
   width: 280px;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  margin: 0 auto 24px auto;
 
   input{
     display: none;
   }
+
   span{
     z-index: 99;
     position: absolute;
@@ -63,50 +48,44 @@ export const LabelAvatar = styled.label`
     }
   }
 
+  img{
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #181c2e;
+  }
 `;
 
 export const FormProfile = styled.form`
+  width: 100%;
   padding: 30px;
   margin-bottom: 15px ;
   display: flex;
   flex-direction: column;
   max-width: 600px;
+  flex: 1;
 
   img{
     border-radius: 50%;
-  object-fit: cover;
+    object-fit: cover;
   }
-label{
-  font-size: 1.2rem;
-  margin-bottom: 15px ;
-}
-input{
-  margin-bottom: 15px ;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  max-width: 600px;
-}
 
-input:disabled{
-  cursor: not-allowed;
-}
-button{
-    background: #181c2e;
-    border-radius: 6px;
-    border: none;
-    height: 40px;
-    padding: 6px 12px;
-    font-size: 1rem;
-    color: #f7f7f7;
-    cursor: pointer;
-    max-width: 600px;
-    transition: ease-in-out 0.6s;
-    &:hover{
-      border: 1px solid #181c2e;
-      background-color: #f7f7f7;
-      color: #181c2e;
+  label{
+    font-size: 1.2rem;
+    margin-bottom: 10px ;
+  }
+
+  @media(max-width: 700px){
+    padding: 20px 16px;
+
+    ${LabelAvatar}{
+      width: 100%;
     }
 
+    ${LabelAvatar} img{
+      width: 200px;
+      height: 200px;
+    }
   }
 `;

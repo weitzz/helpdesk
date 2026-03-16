@@ -1,20 +1,21 @@
-import firebase from 'firebase/app'
-import 'firebase/auth'
-import 'firebase/firestore'
-import 'firebase/storage'
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC79kHeEU6SY7zc-qHAXQ2T9ZvE4zVbOFs",
-  authDomain: "sistema-c4fa8.firebaseapp.com",
-  projectId: "sistema-c4fa8",
-  storageBucket: "sistema-c4fa8.appspot.com",
-  messagingSenderId: "746920227997",
-  appId: "1:746920227997:web:35f380deeb5ef59d955074",
-  measurementId: "G-1Z985VPP1B"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY ,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET ,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID ,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID ,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
-if(!firebase.apps.length){
-  firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const database = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
-}
-export default firebase
+export { database, auth, storage };

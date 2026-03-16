@@ -1,111 +1,91 @@
-import { useContext } from "react"
-import { Link } from "react-router-dom"
-import styled from "styled-components"
+import { useContext, useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import { AuthContext } from '../../contexts/auth'
 import Avatar from '../../assets/avatar2.jpg'
-import { FaHome, FaUserAlt, FaCog } from "react-icons/fa";
-
-const Sidebar = styled.div`
-  width: 200px;
-  background: #181c2e;
-  position: fixed;
-  height: 100vh;
-
-  @media(max-width:700px){
-    width: 100%;
-    height: auto;
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-  }
-
-  div{
-   height: 150px;
-   padding-top: 30px;
-
-   @media(max-width:700px){
-    display: none;
-  }
-  }
-  main{
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    border-bottom: 1px solid #8b8b8b;
-    margin-bottom: 1rem;
-    @media(max-width:700px){
-      border: none;
-      margin: 0;
-      justify-content: flex-start;
-  }
-    span{
-      color: #f7f7f7;
-      margin-bottom: 1rem;
-      @media(max-width:700px){
-        font-size: 1em;
-        margin-bottom: 0;
-        margin-right: 10px;
-      }
-    }
-  }
-
-img{
-  border-radius: 50%;
-  display: block;
-  margin: auto;
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-
-}
-
-a{
-  color: #f7f7f7;
-  padding: 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  transition: ease-in-out .6s;
-
-  &:hover{
-    background-color: #001438;
-   
-  }
-
-}
-svg{
-  margin-right: 8px;
-
-}
- 
-`;
-
+import { FaHome, FaUserAlt, FaCog, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { Sidebar } from './style'
 
 const Header = () => {
-  const { user } = useContext(AuthContext)
+  const { user, logout } = useContext(AuthContext)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true')
+  const [avatarSrc, setAvatarSrc] = useState(Avatar)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const sidebarWidth = collapsed ? '72px' : '200px'
+
+    document.documentElement.style.setProperty('--sidebar-width', sidebarWidth)
+    localStorage.setItem('sidebarCollapsed', String(collapsed))
+
+    return () => {
+      document.documentElement.style.setProperty('--sidebar-width', '200px')
+    }
+  }, [collapsed])
+
+  useEffect(() => {
+    if (!user?.avatarUrl) {
+      setAvatarSrc(Avatar)
+      return
+    }
+
+    let isMounted = true
+    const image = new Image()
+
+    image.onload = () => {
+      if (isMounted) {
+        setAvatarSrc(user.avatarUrl)
+      }
+    }
+
+    image.onerror = () => {
+      if (isMounted) {
+        setAvatarSrc(Avatar)
+      }
+    }
+
+    image.src = user.avatarUrl
+
+    return () => {
+      isMounted = false
+    }
+  }, [user?.avatarUrl])
+
+  async function handleLogout() {
+    await logout()
+    navigate("/")
+  }
+
   return (
-    <Sidebar>
-      <div>
-        <img src={user.avatarUrl === null ? Avatar : user.avatarUrl} alt="Foto avatar" />
+    <Sidebar $collapsed={collapsed}>
+      <button type="button" className="toggle" onClick={() => setCollapsed((value) => !value)}>
+        <FaBars size={20} /></button>
+
+      <div className="avatarArea">
+        <img src={avatarSrc} alt="Foto avatar" onError={() => setAvatarSrc(Avatar)} />
       </div>
+
       <main>
         <span>{user.name}</span>
       </main>
+
       <Link to="/dashboard">
         <FaHome color='#f7f7f7' size={22} />
-        Chamados
+        <span className="linkText">Chamados</span>
       </Link>
       <Link to="/customers">
         <FaUserAlt color='#f7f7f7' size={22} />
-        Clientes
+        <span className="linkText">Clientes</span>
       </Link>
       <Link to="/profile">
         <FaCog color='#f7f7f7' size={22} />
-        Configurações
+        <span className="linkText">Configuracoes</span>
       </Link>
+      <div>
+        <button type="button" className="logoutButton" onClick={handleLogout}>
+          <FaSignOutAlt color='#f7f7f7' size={22} />
+          <span className="linkText">Sair</span>
+        </button>
+      </div>
     </Sidebar>
   )
 }

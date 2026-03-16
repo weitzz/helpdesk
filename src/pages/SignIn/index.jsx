@@ -1,8 +1,10 @@
-import React, { useState ,useContext} from 'react'
+import React, { useState, useContext } from 'react'
 import { Link } from 'react-router-dom'
-import logo from '../../assets/logo.jpg'
+import logo from '../../assets/avatar2.jpg'
 import styled from 'styled-components'
 import { AuthContext } from '../../contexts/auth'
+import Input from '../../components/Input'
+import Button from '../../components/Button'
 
 const Container = styled.div`
 height: 100vh;
@@ -45,26 +47,6 @@ width: 90%;
     margin-bottom: 0.5rem;
     color: #181c2e;
   }
-
-  input{
-    margin-bottom:1rem ;
-    border-radius: 6px;
-    border: none;
-    height: 40px;
-    padding: 10px;
-    font-size: 1rem;
-  }
-  button{
-    background: #181c2e;
-    border-radius: 6px;
-    border: none;
-    height: 40px;
-    padding: 6px 12px;
-    font-size: 1rem;
-    color: #f7f7f7;
-    cursor: pointer;
-
-  }
   a{
     color: #181c2e;
     text-align: center;
@@ -76,17 +58,17 @@ const SignIn = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const {signIn,loadingAuth} = useContext(AuthContext)
+  const { signIn, loadingAuth } = useContext(AuthContext)
 
-  function handleSubmit(e){
+  async function handleSubmit(e) {
     e.preventDefault()
-   if(email !== '' && password !== ''){
-     signIn(email,password)
-   }
+    if (email !== '' && password !== '') {
+      await signIn(email, password)
+    }
   }
 
   return (
-  
+
     <Container>
       <LoginContainer >
         <LogoContainer >
@@ -94,16 +76,16 @@ const SignIn = () => {
         </LogoContainer>
         <Form onSubmit={handleSubmit}>
           <h1>Entrar</h1>
-          <input type="text" placeholder='email@email.com'
-           value={email} onChange={e => setEmail(e.target.value)} />
-          <input type="password" placeholder='*******' 
-          value={password} onChange={e => setPassword(e.target.value)}/>
-          <button type='submit'>{loadingAuth ? 'Carregando...': 'Acessar'}</button>
+          <Input type="text" placeholder='email@email.com'
+            value={email} onChange={e => setEmail(e.target.value)} />
+          <Input type="password" placeholder='*******'
+            value={password} onChange={e => setPassword(e.target.value)} />
+          <Button type='submit'>{loadingAuth ? 'Carregando...' : 'Acessar'}</Button>
           <Link to='/register'>Criar uma conta </Link>
         </Form>
       </LoginContainer>
     </Container>
-   
+
   )
 }
 

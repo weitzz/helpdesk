@@ -1,184 +1,125 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from '../../components/Header'
 import Navbar from '../../components/Navbar'
 import { Link } from 'react-router-dom'
-import {FaDesktop, FaPlus,FaSearch,FaEdit} from 'react-icons/fa'
-
-
-import styled from 'styled-components'
-
-
-export const Content = styled.div`
-  margin-left: 200px;
-  padding: 1px 16px;
-
-  @media(max-width:700px){
-   margin-left: 0;
-  }
-
-
-`;
-export const Container = styled.div`
-  margin-top: 30px;
-  display: flex;
-  background: #f7f7f7;
-  border-radius: 4px;
-  padding: 10px;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  
-  span{
-    margin: 30px 0;
-    font-weight: 600;
-    font-size: 1.2rem;
-  }
-
-  a{
-    background-color:#00923a;
-    color: #f7f7f7;
-    display: flex;
-    flex-direction: row;
-    padding: 8px 16px;
-    justify-content: space-around;
-    align-items: center;
-    font-size: 1.1rem;
-    border-radius: 6px;
-    transition:  ease-in 0.2s;
-
-    &:hover{
-      background-color: #00593b;
-      transform: scale(1.1);
-    }
-    svg{
-      margin-right: 8px;
-    }
-  }
-  `
-
-export const BtnLink = styled(Link)`
-    background-color:#00923a;
-    width: 200px;
-    color: #f7f7f7;
-    display: flex;
-    flex-direction: row;
-    padding: 8px 16px;
-    justify-content: space-around;
-    align-items: center;
-    font-size: 1.1rem;
-    border-radius: 6px;
-    transition:  ease-in 0.2s;
-
-    &:hover{
-      background-color: #00593b;
-      transform: scale(1.1);
-    }
-
-` 
-export const ContainerBtn = styled.div`
-  margin: 30px 0;
-  display: flex;
-  justify-content: flex-end;
-`;
-export const Table = styled.table`
-  margin: 0;
-  padding: 0;
-  border: 1px solid #ccc;
-  border-collapse: collapse;
-  width: 100%;
-  table-layout: fixed;
-  @media screen and (max-width: 600px){
-    border: none;
-    font-size: 1.3em;
-  }
-
-  @media screen and (max-width: 600px){
-    thead{
-      border: none;
-      clip: rect(0 0 0 0);
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      padding: 0;
-      position: absolute;
-      width: 1px;
-    }
-    tr{
-      border-bottom: 3px solid #ddd;
-      display: block;
-      margin-bottom: .65em;
-    }
-    td{
-      border-bottom: 1px solid #ddd;
-      display: block;
-      font-size: .8em;
-      text-align: right;
-    }
-
-    td:before{
-      content: attr(data-label);
-      float: left;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    td:last-child{
-      border-bottom: 0;
-    }
-
-  }
-
-  table caption{
-    font-size: 1.2rem;
-    margin: .5em 0 .75em ;
-  }
-
-  tr{
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    padding: .35em;
-  }
-  th,td{
-    padding: .62em;
-    text-align: center;
-  }
-  th{
-    text-transform: uppercase;
-  }
-  td .badge{
-    padding: 6px;
-    border-radius: 4px;
-    color: #f8f8f8;
-    font-weight: 600;
-  }
-  td .action{
-    border: 0;
-    margin-right: 8px;
-    padding: 6px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  td .action svg {
-    vertical-align: middle;
-  }
-`;
-
-
+import { FaDesktop, FaPlus, FaSearch, FaEdit } from 'react-icons/fa'
+import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { toast } from 'react-toastify'
+import { database } from '../../services/firebaseConnection'
+import {
+  Content,
+  Container,
+  BtnLink,
+  ContainerBtn,
+  FilterBar,
+  CompanySection,
+  Pagination,
+  Table,
+  ModalOverlay,
+  ModalContent
+} from './style'
 
 
 
 const Dashboard = () => {
-  const [services,setServices] = useState([1])
-  
+  const [services, setServices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [detail, setDetail] = useState(null)
+  const [selectedClient, setSelectedClient] = useState('todos')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 6
+
+  useEffect(() => {
+    async function loadCalls() {
+      try {
+        const chamadosRef = collection(database, 'chamados')
+        const q = query(chamadosRef, orderBy('created', 'desc'))
+        const snapshot = await getDocs(q)
+
+        const lista = snapshot.docs.map((doc) => {
+          const data = doc.data()
+
+          return {
+            id: doc.id,
+            client: data.client,
+            clientId: data.clientId,
+            subject: data.subject,
+            status: data.status,
+            created: data.created,
+            attendedAt: data.attendedAt || null,
+            descriptions: data.descriptions || '',
+            userId: data.userId || ''
+          }
+        })
+
+        setServices(lista)
+      } catch (error) {
+        toast.error('Erro ao buscar chamados.')
+        console.log(error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCalls()
+  }, [])
+
+  function formatDate(created) {
+    if (!created) {
+      return '--'
+    }
+
+    const date = created.toDate ? created.toDate() : new Date(created)
+
+    return date.toLocaleDateString('pt-BR')
+  }
+
+  function openModal(item) {
+    setDetail(item)
+  }
+
+  function closeModal() {
+    setDetail(null)
+  }
+
+  const clientOptions = Array.from(new Set(services.map((item) => item.client)))
+
+  const filteredServices = selectedClient === 'todos'
+    ? services
+    : services.filter((item) => item.client === selectedClient)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedClient])
+
+  const totalPages = Math.max(1, Math.ceil(filteredServices.length / itemsPerPage))
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedServices = filteredServices.slice(startIndex, startIndex + itemsPerPage)
+
+  const groupedServices = paginatedServices.reduce((acc, item) => {
+    if (!acc[item.client]) {
+      acc[item.client] = []
+    }
+
+    acc[item.client].push(item)
+    return acc
+  }, {})
+
+
 
   return (
     <>
     <Header/>
     <Content>
-    <Navbar title='Chamados'>
+      <Navbar title='Chamados'>
         <FaDesktop size={25}/>
       </Navbar>
-      {services.length === 0 ? (
+      {loading ? (
+      <Container>
+        <span>Buscando chamados...</span>
+      </Container>
+      ) : services.length === 0 ? (
       <Container>
         <span>Nenhum chamado registrado</span>
         <Link to='/new'>
@@ -193,34 +134,132 @@ const Dashboard = () => {
           Novo chamado</BtnLink>
         </ContainerBtn>
 
-        <Table>
-          <thead>
-          <tr>
-            <th scope= 'col'>Cliente</th>
-            <th scope= 'col'>Assunto</th>
-            <th scope= 'col'>Status</th>
-            <th scope= 'col'>Cadastrado em...</th>
-            <th scope= 'col'>#</th>
-          </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td data-label='Cliente'>Sujeito</td>
-              <td data-label='Assunto'>Suporte</td>
-              <td data-label='Status'>
-                <span  className='badge' style={{backgroundColor:'#55ac55'}}>Aberto</span>
-              </td>
-              <td data-label='date'>20/05/2022</td>
-              <td data-label='#' >
-                <button className='action' style={{backgroundColor:'#098de5'}}><FaSearch size={17}  color={'#Fff'}/></button>
-                <button className='action' style={{backgroundColor:'#ff904d'}}><FaEdit size={17} color={'#Fff'}/></button>
-              </td>
-            </tr>
-          </tbody>
-        </Table>
+        <FilterBar>
+          <label htmlFor="clientFilter">Empresa</label>
+          <select
+            id="clientFilter"
+            value={selectedClient}
+            onChange={(event) => setSelectedClient(event.target.value)}
+          >
+            <option value="todos">Todas as empresas</option>
+            {clientOptions.map((client) => (
+              <option key={client} value={client}>
+                {client}
+              </option>
+            ))}
+          </select>
+        </FilterBar>
+
+        {Object.entries(groupedServices).map(([client, chamados]) => (
+          <CompanySection key={client}>
+            <h2>{client}</h2>
+            <p>{chamados.length} chamado(s) registrado(s)</p>
+
+            <Table>
+              <thead>
+              <tr>
+                <th scope= 'col'>Cliente</th>
+                <th scope= 'col'>Assunto</th>
+                <th scope= 'col'>Status</th>
+                <th scope= 'col'>Cadastrado em...</th>
+                <th scope= 'col'>Atendido em...</th>
+                <th scope= 'col'>#</th>
+              </tr>
+              </thead>
+              <tbody>
+                {chamados.map((item) => (
+                  <tr key={item.id}>
+                    <td data-label='Cliente'>{item.client}</td>
+                    <td data-label='Assunto'>{item.subject}</td>
+                    <td data-label='Status'>
+                      <span
+                        className='badge'
+                        style={{
+                          backgroundColor: item.status === 'Aberto'
+                            ? '#55ac55'
+                            : item.status === 'Progresso'
+                              ? '#999'
+                              : '#5c5cfc'
+                        }}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                    <td data-label='date'>{formatDate(item.created)}</td>
+                    <td data-label='Atendido em'>{formatDate(item.attendedAt)}</td>
+                    <td data-label='#'>
+                      <button
+                        className='action'
+                        style={{ backgroundColor: '#098de5' }}
+                        onClick={() => openModal(item)}
+                      >
+                        <FaSearch size={17} color={'#Fff'} />
+                      </button>
+                      <Link
+                        to={`/new/${item.id}`}
+                        className='action'
+                        style={{ backgroundColor: '#ff904d' }}
+                      >
+                        <FaEdit size={17} color={'#Fff'} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </CompanySection>
+        ))}
+
+        <Pagination>
+          <span>
+            Pagina {currentPage} de {totalPages}
+          </span>
+          <div>
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((page) => page - 1)}
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((page) => page + 1)}
+            >
+              Proxima
+            </button>
+          </div>
+        </Pagination>
         </>
       )}
     </Content>
+    {detail && (
+      <ModalOverlay>
+        <ModalContent>
+          <h2>Detalhes do chamado</h2>
+          <strong>Cliente</strong>
+          <p>{detail.client}</p>
+
+          <strong>Assunto</strong>
+          <p>{detail.subject}</p>
+
+          <strong>Status</strong>
+          <p>{detail.status}</p>
+
+          <strong>Data</strong>
+          <p>{formatDate(detail.created)}</p>
+
+          <strong>Atendido em</strong>
+          <p>{formatDate(detail.attendedAt)}</p>
+
+          <strong>Descricao</strong>
+          <p>{detail.descriptions || 'Sem descricao informada.'}</p>
+
+          <button onClick={closeModal}>Fechar</button>
+        </ModalContent>
+      </ModalOverlay>
+    )}
     </>
   )
 }
