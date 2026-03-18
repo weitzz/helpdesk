@@ -1,6 +1,12 @@
 import styled, { css } from 'styled-components'
 
-const variants = {
+export type ButtonVariant = 'primary' | 'outline' | 'success'
+
+interface ButtonStyleProps {
+  $variant: ButtonVariant
+}
+
+const variants: Record<ButtonVariant, ReturnType<typeof css>> = {
   primary: css`
     background: #181c2e;
     color: #f7f7f7;
@@ -33,17 +39,17 @@ const variants = {
   `
 }
 
-export const StyledButton = styled.button`
+export const StyledButton = styled.button<ButtonStyleProps>`
   min-height: 40px;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;
   transition: ease-in-out 0.3s;
-  ${({ $variant }) => variants[$variant] || variants.primary}
+  ${({ $variant }) => variants[$variant]}
 
   &:disabled{
     opacity: 0.7;
     cursor: not-allowed;
   }
-`;
+`

@@ -1,6 +1,5 @@
 import styled from 'styled-components'
 
-
 export const Content = styled.div`
   margin-left: var(--sidebar-width, 200px);
   padding: 1px 16px;
@@ -8,9 +7,7 @@ export const Content = styled.div`
   @media(max-width:700px){
    margin-left: 0;
   }
-
-
-`;
+`
 
 export const Container = styled.div`
   margin-top: 30px;
@@ -20,7 +17,7 @@ export const Container = styled.div`
   padding: 10px;
   align-items: center;
   justify-content: center;
-`;
+`
 
 export const LabelAvatar = styled.label`
   width: 280px;
@@ -55,7 +52,7 @@ export const LabelAvatar = styled.label`
     object-fit: cover;
     border: 3px solid #181c2e;
   }
-`;
+`
 
 export const FormProfile = styled.form`
   width: 100%;
@@ -88,4 +85,4 @@ export const FormProfile = styled.form`
       height: 200px;
     }
   }
-`;
+`

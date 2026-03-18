@@ -7,7 +7,7 @@ export const Content = styled.div`
   @media(max-width:700px){
    margin-left: 0;
   }
-`;
+`
 
 export const Container = styled.div`
   margin-top: 30px;
@@ -17,7 +17,7 @@ export const Container = styled.div`
   padding: 10px;
   align-items: center;
   justify-content: center;
-`;
+`
 
 export const FormProfile = styled.form`
   padding: 30px;
@@ -52,7 +52,7 @@ export const FormProfile = styled.form`
       color: #f7f7f7;
     }
   }
-`;
+`
 
 export const TableContainer = styled.div`
   margin-top: 30px;
@@ -64,7 +64,7 @@ export const TableContainer = styled.div`
     margin-bottom: 20px;
     color: #181c2e;
   }
-`;
+`
 
 export const Table = styled.table`
   width: 100%;
@@ -86,4 +86,4 @@ export const Table = styled.table`
     display: block;
     overflow-x: auto;
   }
-`;
+`

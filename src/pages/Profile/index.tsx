@@ -1,32 +1,30 @@
-import { useState, useContext, useEffect } from 'react';
-import { AuthContext } from '../../contexts/auth'
-import { toast } from 'react-toastify';
-import Header from '../../components/Header'
-import Navbar from '../../components/Navbar'
-import Input from '../../components/Input'
-import Button from '../../components/Button'
-
-import { Content, Container, LabelAvatar, FormProfile } from './style.js'
-import { FaCog, FaUpload } from "react-icons/fa";
-import Avatar from '../../assets/avatar.png'
-import { database, storage } from '../../services/firebaseConnection';
+import { ChangeEvent, FormEvent, useContext, useEffect, useState } from 'react'
+import { FaCog, FaUpload } from 'react-icons/fa'
 import { doc, setDoc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { toast } from 'react-toastify'
+import Avatar from '../../assets/avatar.png'
+import Button from '../../components/Button'
+import Header from '../../components/Header'
+import Input from '../../components/Input'
+import Navbar from '../../components/Navbar'
+import { AuthContext } from '../../contexts/auth'
+import { database, storage } from '../../services/firebaseConnection'
+import { Container, Content, FormProfile, LabelAvatar } from './style'
 
 const Profile = () => {
   const { user, logout, setUser, storageUser } = useContext(AuthContext)
-  const [name, setName] = useState(user && user.name)
-  const [email, setEmail] = useState(user && user.email)
-  const [avatarUrl, setAvatarUrl] = useState(user && user.avatarUrl)
-  const [imageAvatar, setImageAvatar] = useState(null)
+  const [name, setName] = useState(user?.name ?? '')
+  const [email, setEmail] = useState(user?.email ?? '')
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? '')
+  const [imageAvatar, setImageAvatar] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    setName(user?.name || '')
-    setEmail(user?.email || '')
-    setAvatarUrl(user?.avatarUrl || '')
+    setName(user?.name ?? '')
+    setEmail(user?.email ?? '')
+    setAvatarUrl(user?.avatarUrl ?? '')
   }, [user])
 
   useEffect(() => {
@@ -37,8 +35,8 @@ const Profile = () => {
     }
   }, [previewUrl])
 
-  function handleFile(e) {
-    const image = e.target.files[0]
+  function handleFile(e: ChangeEvent<HTMLInputElement>) {
+    const image = e.target.files?.[0]
 
     if (!image) {
       return
@@ -60,20 +58,26 @@ const Profile = () => {
     setPreviewUrl(URL.createObjectURL(image))
   }
 
-
   async function handleUpload() {
+    if (!imageAvatar || !user) {
+      return avatarUrl || null
+    }
+
     const currentUid = user.uid
-    const fileExtension = imageAvatar.name.split('.').pop()
+    const fileExtension = imageAvatar.name.split('.').pop() ?? 'jpg'
     const uploadRef = ref(storage, `images/${currentUid}/avatar_${Date.now()}.${fileExtension}`)
     const snapshot = await uploadBytes(uploadRef, imageAvatar)
     const downloadURL = await getDownloadURL(snapshot.ref)
 
     return downloadURL
-
   }
 
-  async function handleSave(e) {
+  async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+
+    if (!user) {
+      return
+    }
 
     const trimmedName = name.trim()
 
@@ -105,7 +109,7 @@ const Profile = () => {
 
       setUser(data)
       storageUser(data)
-      setAvatarUrl(urlPhoto)
+      setAvatarUrl(urlPhoto ?? '')
       setImageAvatar(null)
 
       if (previewUrl) {
@@ -126,22 +130,22 @@ const Profile = () => {
     <div>
       <Header />
       <Content>
-        <Navbar title='Configurações'>
+        <Navbar title="Configuracoes">
           <FaCog size={25} />
         </Navbar>
 
-        <Container >
+        <Container>
           <FormProfile onSubmit={handleSave}>
             <LabelAvatar>
               <span>
-                <FaUpload color='#f7f7f7' size={25} />
+                <FaUpload color="#f7f7f7" size={25} />
               </span>
-              <input type="file" accept='image/*' onChange={handleFile} />
+              <input type="file" accept="image/*" onChange={handleFile} />
               <img
                 src={previewUrl || avatarUrl || Avatar}
-                alt='Avatar do usuario'
-                width='250'
-                height='250'
+                alt="Avatar do usuario"
+                width="250"
+                height="250"
               />
             </LabelAvatar>
 
@@ -150,20 +154,20 @@ const Profile = () => {
               id="name"
               type="text"
               value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder='Digite seu nome'
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Digite seu nome"
             />
             <label htmlFor="email">Email:</label>
-            <Input id="email" type="text" value={email} disabled={true} />
+            <Input id="email" type="text" value={email} disabled />
 
-            <Button type='submit' disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Salvando...' : 'Salvar alteracoes'}
             </Button>
           </FormProfile>
         </Container>
         <div>
           <Container>
-            <Button variant='outline' onClick={() => logout()}>Sair</Button>
+            <Button variant="outline" onClick={() => logout()}>Sair</Button>
           </Container>
         </div>
       </Content>

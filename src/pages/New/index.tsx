@@ -1,34 +1,39 @@
-import { useState, useContext, useEffect } from 'react'
-import { AuthContext } from '../../contexts/auth'
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore'
-import Header from '../../components/Header'
-import Navbar from '../../components/Navbar'
+import { ChangeEvent, FormEvent, useContext, useEffect, useState } from 'react'
+import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
 import { FaPlus } from 'react-icons/fa'
-import { Content, Container, Form } from './style'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { database } from '../../services/firebaseConnection'
-import Input from '../../components/Input'
 import Button from '../../components/Button'
+import Header from '../../components/Header'
+import Input from '../../components/Input'
+import Navbar from '../../components/Navbar'
+import { AuthContext } from '../../contexts/auth'
+import { database } from '../../services/firebaseConnection'
+import type { Customer, ServiceStatus, ServiceSubject } from '../../types'
+import { Container, Content, Form } from './style'
 
 const listRef = collection(database, 'customers')
 
 const New = () => {
   const [loadCustomers, setLoadCustomers] = useState(true)
-  const [customers, setCustomers] = useState([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [customerSelected, setCustomerSelected] = useState(0)
-  const [subject, setSubject] = useState('Suporte')
-  const [status, setStatus] = useState('Aberto')
+  const [subject, setSubject] = useState<ServiceSubject>('Suporte')
+  const [status, setStatus] = useState<ServiceStatus>('Aberto')
   const [descriptions, setDescriptions] = useState('')
   const [isEdit, setIsEdit] = useState(false)
   const [loadingSubmit, setLoadingSubmit] = useState(false)
-  const [attendedAt, setAttendedAt] = useState(null)
+  const [attendedAt, setAttendedAt] = useState<Date | null>(null)
   const { user } = useContext(AuthContext)
-  const { id } = useParams()
+  const { id } = useParams<'id'>()
   const navigate = useNavigate()
 
   useEffect(() => {
-    async function loadCalled(list) {
+    async function loadCalled(list: Customer[]) {
+      if (!id) {
+        return
+      }
+
       try {
         const docRef = doc(database, 'chamados', id)
         const snapshot = await getDoc(docRef)
@@ -44,10 +49,10 @@ const New = () => {
           (item) => item.id === data.clientId || item.nameCustomers === data.client
         )
 
-        setSubject(data.subject || 'Suporte')
-        setStatus(data.status || 'Aberto')
-        setDescriptions(data.descriptions || '')
-        setAttendedAt(data.attendedAt || null)
+        setSubject((data.subject as ServiceSubject) || 'Suporte')
+        setStatus((data.status as ServiceStatus) || 'Aberto')
+        setDescriptions(typeof data.descriptions === 'string' ? data.descriptions : '')
+        setAttendedAt(data.attendedAt?.toDate ? data.attendedAt.toDate() : null)
         setIsEdit(true)
 
         if (customerIndex >= 0) {
@@ -62,12 +67,16 @@ const New = () => {
     async function loadCustomers() {
       try {
         const snapshot = await getDocs(listRef)
-        const list = []
+        const list: Customer[] = []
 
-        snapshot.forEach((doc) => {
+        snapshot.forEach((item) => {
+          const data = item.data()
+
           list.push({
-            id: doc.id,
-            nameCustomers: doc.data().nameCustomers
+            id: item.id,
+            nameCustomers: typeof data.nameCustomers === 'string' ? data.nameCustomers : '',
+            cnpj: typeof data.cnpj === 'string' ? data.cnpj : '',
+            adress: typeof data.adress === 'string' ? data.adress : ''
           })
         })
 
@@ -88,11 +97,15 @@ const New = () => {
       }
     }
 
-    loadCustomers()
+    void loadCustomers()
   }, [id, navigate])
 
-  const handleRegister = async (event) => {
+  const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (!user) {
+      return
+    }
 
     if (customers.length === 0) {
       toast.info('Cadastre um cliente antes de criar um chamado.')
@@ -106,16 +119,16 @@ const New = () => {
       const chamadoData = {
         client: customer.nameCustomers,
         clientId: customer.id,
-        subject: subject,
-        status: status,
-        descriptions: descriptions,
+        subject,
+        status,
+        descriptions,
         userId: user.uid,
         attendedAt: status === 'Atendido'
           ? attendedAt || new Date()
           : null
       }
 
-      if (isEdit) {
+      if (isEdit && id) {
         await updateDoc(doc(database, 'chamados', id), chamadoData)
         toast.success('Chamado atualizado com sucesso!')
         navigate('/dashboard')
@@ -140,15 +153,15 @@ const New = () => {
     }
   }
 
-  const handleChangeSelect = event => {
-    setSubject(event.target.value)
+  const handleChangeSelect = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSubject(event.target.value as ServiceSubject)
   }
 
-  const handleOptionChange = event => {
-    setStatus(event.target.value)
+  const handleOptionChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setStatus(event.target.value as ServiceStatus)
   }
 
-  const handleChangeCustomers = event => {
+  const handleChangeCustomers = (event: ChangeEvent<HTMLSelectElement>) => {
     setCustomerSelected(Number(event.target.value))
   }
 
@@ -163,16 +176,14 @@ const New = () => {
           <Form onSubmit={handleRegister}>
             <label>Cliente</label>
             {loadCustomers ? (
-              <Input type='text' disabled={true} placeholder='Carregando...' />
+              <Input type="text" disabled placeholder="Carregando..." />
             ) : (
               <select value={customerSelected} onChange={handleChangeCustomers}>
-                {customers.map((item, index) => {
-                  return (
-                    <option key={item.id} value={index}>
-                      {item.nameCustomers}
-                    </option>
-                  )
-                })}
+                {customers.map((item, index) => (
+                  <option key={item.id} value={index}>
+                    {item.nameCustomers}
+                  </option>
+                ))}
               </select>
             )}
 
@@ -183,27 +194,27 @@ const New = () => {
               <option value="Financeiro">Financeiro</option>
             </select>
             <label>Status</label>
-            <div className='status'>
+            <div className="status">
               <input
                 type="radio"
-                name='radio'
-                value='Aberto'
+                name="radio"
+                value="Aberto"
                 onChange={handleOptionChange}
                 checked={status === 'Aberto'}
               />
               <span>Aberto</span>
               <input
                 type="radio"
-                name='radio'
-                value='Progresso'
+                name="radio"
+                value="Progresso"
                 onChange={handleOptionChange}
                 checked={status === 'Progresso'}
               />
               <span>Progresso</span>
               <input
                 type="radio"
-                name='radio'
-                value='Atendido'
+                name="radio"
+                value="Atendido"
                 onChange={handleOptionChange}
                 checked={status === 'Atendido'}
               />
@@ -211,16 +222,15 @@ const New = () => {
             </div>
             <label>Descricao</label>
             <textarea
-              type='text'
               placeholder="Descreva seu problema"
               value={descriptions}
-              onChange={event => setDescriptions(event.target.value)}
+              onChange={(event) => setDescriptions(event.target.value)}
             />
 
-            <Button type='submit' disabled={loadingSubmit}>
+            <Button type="submit" disabled={loadingSubmit}>
               {loadingSubmit ? 'Salvando...' : isEdit ? 'Atualizar' : 'Registrar'}
             </Button>
-            <Link to='/dashboard' className='btn'>Voltar</Link>
+            <Link to="/dashboard" className="btn">Voltar</Link>
           </Form>
         </Container>
       </Content>

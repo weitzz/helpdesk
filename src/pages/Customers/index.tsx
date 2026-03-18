@@ -1,37 +1,40 @@
-import { useState, useEffect } from 'react'
-import Navbar from '../../components/Navbar'
-import Header from '../../components/Header'
-import { FiUser } from 'react-icons/fi'
-import { database } from '../../services/firebaseConnection'
+import { FormEvent, useEffect, useState } from 'react'
 import { addDoc, collection, getDocs } from 'firebase/firestore'
-import { toast } from 'react-toastify';
+import { FiUser } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
-import { Content, Container, FormProfile, TableContainer, Table } from './style'
-import Input from '../../components/Input'
+import { toast } from 'react-toastify'
 import Button from '../../components/Button'
+import Header from '../../components/Header'
+import Input from '../../components/Input'
+import Navbar from '../../components/Navbar'
+import { database } from '../../services/firebaseConnection'
+import type { Customer } from '../../types'
+import { Container, Content, FormProfile, Table, TableContainer } from './style'
 
 const Customers = () => {
   const [nameCustomers, setNameCustomers] = useState('')
   const [cnpj, setCnpj] = useState('')
   const [adress, setAdress] = useState('')
-  const [customersList, setCustomersList] = useState([])
+  const [customersList, setCustomersList] = useState<Customer[]>([])
   const [loadingCustomers, setLoadingCustomers] = useState(true)
 
   useEffect(() => {
-    loadCustomers()
+    void loadCustomers()
   }, [])
 
   async function loadCustomers() {
     try {
       const snapshot = await getDocs(collection(database, 'customers'))
-      const list = []
+      const list: Customer[] = []
 
-      snapshot.forEach((doc) => {
+      snapshot.forEach((item) => {
+        const data = item.data()
+
         list.push({
-          id: doc.id,
-          nameCustomers: doc.data().nameCustomers,
-          cnpj: doc.data().cnpj,
-          adress: doc.data().adress
+          id: item.id,
+          nameCustomers: typeof data.nameCustomers === 'string' ? data.nameCustomers : '',
+          cnpj: typeof data.cnpj === 'string' ? data.cnpj : '',
+          adress: typeof data.adress === 'string' ? data.adress : ''
         })
       })
 
@@ -43,22 +46,22 @@ const Customers = () => {
     }
   }
 
-  async function handleAdd(e) {
+  async function handleAdd(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
     if (nameCustomers !== '' && cnpj !== '' && adress !== '') {
       try {
         await addDoc(collection(database, 'customers'), {
-          nameCustomers: nameCustomers,
-          cnpj: cnpj,
-          adress: adress
+          nameCustomers,
+          cnpj,
+          adress
         })
 
         setNameCustomers('')
         setCnpj('')
         setAdress('')
         toast.info('Cadastrado com sucesso!')
-        loadCustomers()
+        await loadCustomers()
       } catch (error) {
         toast.error('Erro ao cadastrar empresa')
       }
@@ -71,7 +74,7 @@ const Customers = () => {
     <>
       <Header />
       <Content>
-        <Navbar title='Clientes'>
+        <Navbar title="Clientes">
           <FiUser size={25} />
         </Navbar>
 
@@ -80,26 +83,26 @@ const Customers = () => {
             <label>Nome Fantasia</label>
             <Input
               type="text"
-              placeholder='Nome da empresa'
+              placeholder="Nome da empresa"
               value={nameCustomers}
-              onChange={e => { setNameCustomers(e.target.value) }}
+              onChange={(e) => setNameCustomers(e.target.value)}
             />
             <label>Cnpj</label>
             <Input
               type="text"
-              placeholder='CNPJ'
+              placeholder="CNPJ"
               value={cnpj}
-              onChange={e => { setCnpj(e.target.value) }}
+              onChange={(e) => setCnpj(e.target.value)}
             />
             <label>Endereco</label>
             <Input
               type="text"
-              placeholder='Rua...'
+              placeholder="Rua..."
               value={adress}
-              onChange={e => { setAdress(e.target.value) }}
+              onChange={(e) => setAdress(e.target.value)}
             />
-            <Button type='submit'>Cadastrar</Button>
-            <Link to='/dashboard' className='btn'>Voltar</Link>
+            <Button type="submit">Cadastrar</Button>
+            <Link to="/dashboard" className="btn">Voltar</Link>
           </FormProfile>
         </Container>
 

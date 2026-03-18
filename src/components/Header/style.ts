@@ -1,6 +1,10 @@
 import styled from 'styled-components'
 
-export const Sidebar = styled.div`
+interface SidebarProps {
+  $collapsed: boolean
+}
+
+export const Sidebar = styled.div<SidebarProps>`
   width: ${({ $collapsed }) => ($collapsed ? '72px' : '200px')};
   background: #181c2e;
   position: fixed;
@@ -121,4 +125,4 @@ export const Sidebar = styled.div`
       display: inline;
     }
   }
-`;
+`

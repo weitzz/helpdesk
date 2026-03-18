@@ -19,4 +19,4 @@ export const StyledInput = styled.input`
     outline: none;
     border-color: #181c2e;
   }
-`;
+`

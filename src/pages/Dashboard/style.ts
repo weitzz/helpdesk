@@ -1,5 +1,5 @@
-import styled from 'styled-components'
 import { Link } from 'react-router-dom'
+import styled from 'styled-components'
 
 export const Content = styled.div`
   margin-left: var(--sidebar-width, 200px);
@@ -8,7 +8,7 @@ export const Content = styled.div`
   @media(max-width:700px){
    margin-left: 0;
   }
-`;
+`
 
 export const Container = styled.div`
   margin-top: 30px;
@@ -19,7 +19,7 @@ export const Container = styled.div`
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  
+
   span{
     margin: 30px 0;
     font-weight: 600;
@@ -72,7 +72,7 @@ export const ContainerBtn = styled.div`
   margin: 30px 0;
   display: flex;
   justify-content: flex-end;
-`;
+`
 
 export const FilterBar = styled.div`
   margin: 20px 0;
@@ -99,7 +99,7 @@ export const FilterBar = styled.div`
     flex-direction: column;
     align-items: stretch;
   }
-`;
+`
 
 export const CompanySection = styled.section`
   margin-top: 20px;
@@ -116,7 +116,7 @@ export const CompanySection = styled.section`
     color: #666;
     margin-bottom: 16px;
   }
-`;
+`
 
 export const Pagination = styled.div`
   margin: 24px 0 8px;
@@ -160,7 +160,7 @@ export const Pagination = styled.div`
       justify-content: center;
     }
   }
-`;
+`
 
 export const Table = styled.table`
   margin: 0;
@@ -253,7 +253,7 @@ export const Table = styled.table`
   td .action svg {
     vertical-align: middle;
   }
-`;
+`
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -264,7 +264,7 @@ export const ModalOverlay = styled.div`
   justify-content: center;
   padding: 16px;
   z-index: 999;
-`;
+`
 
 export const ModalContent = styled.div`
   width: 100%;
@@ -297,4 +297,4 @@ export const ModalContent = styled.div`
     padding: 10px 16px;
     cursor: pointer;
   }
-`;
+`

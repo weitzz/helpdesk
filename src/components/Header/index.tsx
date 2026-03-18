@@ -1,8 +1,8 @@
-import { useContext, useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { AuthContext } from '../../contexts/auth'
+import { useContext, useEffect, useState } from 'react'
+import { FaBars, FaCog, FaHome, FaSignOutAlt, FaUserAlt } from 'react-icons/fa'
+import { Link, useNavigate } from 'react-router-dom'
 import Avatar from '../../assets/avatar2.jpg'
-import { FaHome, FaUserAlt, FaCog, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { AuthContext } from '../../contexts/auth'
 import { Sidebar } from './style'
 
 const Header = () => {
@@ -33,7 +33,7 @@ const Header = () => {
 
     image.onload = () => {
       if (isMounted) {
-        setAvatarSrc(user.avatarUrl)
+        setAvatarSrc(user.avatarUrl as string)
       }
     }
 
@@ -52,37 +52,38 @@ const Header = () => {
 
   async function handleLogout() {
     await logout()
-    navigate("/")
+    navigate('/')
   }
 
   return (
     <Sidebar $collapsed={collapsed}>
       <button type="button" className="toggle" onClick={() => setCollapsed((value) => !value)}>
-        <FaBars size={20} /></button>
+        <FaBars size={20} />
+      </button>
 
       <div className="avatarArea">
         <img src={avatarSrc} alt="Foto avatar" onError={() => setAvatarSrc(Avatar)} />
       </div>
 
       <main>
-        <span>{user.name}</span>
+        <span>{user?.name ?? ''}</span>
       </main>
 
       <Link to="/dashboard">
-        <FaHome color='#f7f7f7' size={22} />
+        <FaHome color="#f7f7f7" size={22} />
         <span className="linkText">Chamados</span>
       </Link>
       <Link to="/customers">
-        <FaUserAlt color='#f7f7f7' size={22} />
+        <FaUserAlt color="#f7f7f7" size={22} />
         <span className="linkText">Clientes</span>
       </Link>
       <Link to="/profile">
-        <FaCog color='#f7f7f7' size={22} />
+        <FaCog color="#f7f7f7" size={22} />
         <span className="linkText">Configuracoes</span>
       </Link>
       <div>
         <button type="button" className="logoutButton" onClick={handleLogout}>
-          <FaSignOutAlt color='#f7f7f7' size={22} />
+          <FaSignOutAlt color="#f7f7f7" size={22} />
           <span className="linkText">Sair</span>
         </button>
       </div>
