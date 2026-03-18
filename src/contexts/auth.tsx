@@ -33,7 +33,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const storageUser = localStorage.getItem('SistemaUser')
+    const storageUser = sessionStorage.getItem('SistemaUser')
 
     if (storageUser) {
       setUser(JSON.parse(storageUser) as UserData)
@@ -117,12 +117,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   }
 
   function storageUser(data: UserData) {
-    localStorage.setItem('SistemaUser', JSON.stringify(data))
+    sessionStorage.setItem('SistemaUser', JSON.stringify(data))
   }
 
   async function logout() {
     await signOut(auth)
-    localStorage.removeItem('SistemaUser')
+    sessionStorage.removeItem('SistemaUser')
     setUser(null)
   }
 

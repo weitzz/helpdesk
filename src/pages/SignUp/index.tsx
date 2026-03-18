@@ -1,5 +1,6 @@
 import { FormEvent, useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import logo from '../../assets/logo.jpg'
 import Button from '../../components/Button'
 import Input from '../../components/Input'
@@ -16,7 +17,20 @@ const SignUp = () => {
     e.preventDefault()
 
     if (name !== '' && email !== '' && password !== '') {
+      // Validação de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        toast.error('Por favor, insira um email válido.')
+        return
+      }
+      // Validação de senha forte
+      if (password.length < 6) {
+        toast.error('A senha deve ter pelo menos 6 caracteres.')
+        return
+      }
       await signUp(email, password, name)
+    } else {
+      toast.error('Preencha todos os campos.')
     }
   }
 

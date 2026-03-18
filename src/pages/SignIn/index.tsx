@@ -5,7 +5,7 @@ import logo from '../../assets/avatar2.jpg'
 import Button from '../../components/Button'
 import Input from '../../components/Input'
 import { AuthContext } from '../../contexts/auth'
-
+import { toast } from 'react-toastify'
 
 const SignIn = () => {
   const [email, setEmail] = useState('')
@@ -16,7 +16,15 @@ const SignIn = () => {
     e.preventDefault()
 
     if (email !== '' && password !== '') {
+      // Validação básica de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        toast.error('Por favor, insira um email válido.')
+        return
+      }
       await signIn(email, password)
+    } else {
+      toast.error('Preencha todos os campos.')
     }
   }
 

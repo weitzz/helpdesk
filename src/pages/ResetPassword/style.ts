@@ -1,46 +1,32 @@
 import styled from 'styled-components'
+import { AuthCard, AuthForm, AuthPageContainer } from '../../style/auth'
 
-export const Container = styled.div`
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #121212;
-  padding: 16px;
-`
+export const Container = AuthPageContainer
 
-export const Card = styled.div`
-  width: 100%;
+export const Card = styled(AuthCard)`
   max-width: 520px;
-  background: #eaeaec;
-  border-radius: 12px;
   padding: 32px 24px;
 
-  @media(max-width: 700px){
+  @media (max-width: 700px) {
     padding: 24px 16px;
   }
 `
 
-export const Form = styled.form`
-  display: flex;
-  flex-direction: column;
+export const Form = styled(AuthForm)`
   gap: 12px;
 
-  h1{
-    color: #181c2e;
-    text-align: center;
+  h1 {
+    margin-bottom: 0;
   }
 
-  p{
+  p {
     color: #4d5562;
     line-height: 1.5;
     text-align: center;
     margin-bottom: 8px;
   }
 
-  a{
-    color: #181c2e;
-    text-align: center;
+  a {
     padding-top: 6px;
   }
 `
