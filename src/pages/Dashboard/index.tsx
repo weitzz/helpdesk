@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { FaDesktop, FaEdit, FaPlus, FaSearch } from 'react-icons/fa'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import Header from '../../components/Header'
 import Navbar from '../../components/Navbar'
+import { AuthContext } from '../../contexts/auth'
+import { usePermissions } from '../../hooks/usePermissions'
 import { database } from '../../services/firebaseConnection'
 import type { ServiceCall, ServiceDateValue, ServiceStatus, ServiceSubject } from '../../types'
+import { canPerformAction, filterCallsByRole, getRoleColor, getRoleLabel } from '../../utils/rbacHelpers'
 import {
   BtnLink,
   CompanySection,
@@ -21,6 +24,8 @@ import {
 } from './style'
 
 const Dashboard = () => {
+  const { user } = useContext(AuthContext)
+  const { hasPermission } = usePermissions()
   const [services, setServices] = useState<ServiceCall[]>([])
   const [loading, setLoading] = useState(true)
   const [detail, setDetail] = useState<ServiceCall | null>(null)
@@ -84,10 +89,14 @@ const Dashboard = () => {
     setDetail(null)
   }
 
-  const clientOptions = Array.from(new Set(services.map((item) => item.client)))
+  const visibleServices = user
+    ? filterCallsByRole(services, user.role, user.uid)
+    : []
+
+  const clientOptions = Array.from(new Set(visibleServices.map((item) => item.client)))
   const filteredServices = selectedClient === 'todos'
-    ? services
-    : services.filter((item) => item.client === selectedClient)
+    ? visibleServices
+    : visibleServices.filter((item) => item.client === selectedClient)
 
   useEffect(() => {
     setCurrentPage(1)
@@ -116,22 +125,41 @@ const Dashboard = () => {
           <Container>
             <span>Buscando chamados...</span>
           </Container>
-        ) : services.length === 0 ? (
+        ) : visibleServices.length === 0 ? (
           <Container>
-            <span>Nenhum chamado registrado</span>
-            <Link to="/new">
-              <FaPlus size={25} color="#fff" />
-              Novo chamado
-            </Link>
+            <span>Nenhum chamado disponivel para o seu perfil.</span>
+            {hasPermission('canCreateTicket') && (
+              <Link to="/new">
+                <FaPlus size={25} color="#fff" />
+                Novo chamado
+              </Link>
+            )}
           </Container>
         ) : (
           <>
-            <ContainerBtn>
-              <BtnLink to="/new">
-                <FaPlus size={25} color="#fff" />
-                Novo chamado
-              </BtnLink>
-            </ContainerBtn>
+            {user && (
+              <Container style={{ marginBottom: '16px', minHeight: 'unset', padding: '16px' }}>
+                <div>
+                  <strong>{user.name}</strong>
+                  <p>
+                    Perfil atual:{' '}
+                    <strong style={{ color: getRoleColor(user.role) }}>
+                      {getRoleLabel(user.role)}
+                    </strong>
+                  </p>
+                  <p>Chamados visiveis: {visibleServices.length}</p>
+                </div>
+              </Container>
+            )}
+
+            {hasPermission('canCreateTicket') && (
+              <ContainerBtn>
+                <BtnLink to="/new">
+                  <FaPlus size={25} color="#fff" />
+                  Novo chamado
+                </BtnLink>
+              </ContainerBtn>
+            )}
 
             <FilterBar>
               <label htmlFor="clientFilter">Empresa</label>
@@ -195,13 +223,15 @@ const Dashboard = () => {
                           >
                             <FaSearch size={17} color="#fff" />
                           </button>
-                          <Link
-                            to={`/new/${item.id}`}
-                            className="action"
-                            style={{ backgroundColor: '#ff904d' }}
-                          >
-                            <FaEdit size={17} color="#fff" />
-                          </Link>
+                          {user && hasPermission('canEditTicket') && canPerformAction('edit', user.role, item, user.uid) && (
+                            <Link
+                              to={`/new/${item.id}`}
+                              className="action"
+                              style={{ backgroundColor: '#ff904d' }}
+                            >
+                              <FaEdit size={17} color="#fff" />
+                            </Link>
+                          )}
                         </td>
                       </tr>
                     ))}

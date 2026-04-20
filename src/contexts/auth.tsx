@@ -9,7 +9,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { auth, database } from '../services/firebaseConnection'
-import type { AuthContextData, AuthProviderProps, UserData } from '../types'
+import type { AuthContextData, AuthProviderProps, UserData, UserRole } from '../types'
 
 const defaultAuthContext: AuthContextData = {
   signed: false,
@@ -25,6 +25,14 @@ const defaultAuthContext: AuthContextData = {
 }
 
 export const AuthContext = createContext<AuthContextData>(defaultAuthContext)
+
+function normalizeUserRole(role: unknown): UserRole {
+  if (role === 'admin' || role === 'tecnico' || role === 'cliente') {
+    return role
+  }
+
+  return 'cliente'
+}
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<UserData | null>(null)
@@ -51,12 +59,18 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       const userProfile = doc(database, 'users', uid)
       const docSnap = await getDoc(userProfile)
       const profileData = docSnap.data()
+      const emailValue = value.user.email
 
       const data: UserData = {
         uid,
         name: typeof profileData?.name === 'string' ? profileData.name : '',
-        email: value.user.email,
-        avatarUrl: typeof profileData?.avatarUrl === 'string' ? profileData.avatarUrl : null
+        email: emailValue,
+        avatarUrl: typeof profileData?.avatarUrl === 'string' ? profileData.avatarUrl : null,
+        role: normalizeUserRole(profileData?.role)
+      }
+
+      if (emailValue && profileData?.email !== emailValue) {
+        await setDoc(userProfile, { email: emailValue }, { merge: true })
       }
 
       setUser(data)
@@ -80,14 +94,17 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
       await setDoc(doc(database, 'users', uid), {
         name,
-        avatarUrl: null
+        email,
+        avatarUrl: null,
+        role: 'cliente'
       })
 
       const data: UserData = {
         uid,
         name,
         email: value.user.email,
-        avatarUrl: null
+        avatarUrl: null,
+        role: 'cliente'
       }
 
       setUser(data)

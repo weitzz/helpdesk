@@ -1,11 +1,26 @@
 import type { Timestamp } from 'firebase/firestore'
 import type { Dispatch, ReactNode, SetStateAction } from 'react'
 
+export type UserRole = 'admin' | 'tecnico' | 'cliente'
+
 export interface UserData {
   uid: string
   name: string
   email: string | null
   avatarUrl: string | null
+  role: UserRole
+}
+
+export interface RBACPermissions {
+  canViewAllTickets: boolean
+  canViewOwnTickets: boolean
+  canViewAssignedTickets: boolean
+  canCreateTicket: boolean
+  canEditTicket: boolean
+  canDeleteTicket: boolean
+  canViewCustomers: boolean
+  canManageUsers: boolean
+  canViewReports: boolean
 }
 
 export interface AuthContextData {

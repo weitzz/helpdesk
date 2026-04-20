@@ -53,32 +53,62 @@ export const Sidebar = styled.div<SidebarProps>`
     }
   }
 
-  main{
+  .userInfo{
+    width: calc(100% - 24px);
+    min-width: 0;
+    min-height: 72px;
+    border-radius: 8px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    border-bottom: 1px solid #8b8b8b;
-    margin-bottom: 1rem;
-    padding: 0 12px;
+    gap: 8px;
+    margin: 0 auto 1rem;
+    padding: 12px;
+    text-align: center;
 
     @media(max-width:700px){
-      border: none;
-      margin: 0;
+      width: auto;
+      min-height: 0;
+      flex: 1 1 160px;
+      flex-direction: row;
       justify-content: flex-start;
+      margin: 8px;
+      padding: 8px 10px;
+      text-align: left;
     }
 
     span{
       color: #f7f7f7;
-      margin-bottom: 1rem;
       font-weight: 600;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       display: ${({ $collapsed }) => ($collapsed ? 'none' : 'block')};
 
       @media(max-width:700px){
         font-size: 1em;
-        margin-bottom: 0;
-        margin-right: 10px;
         display: block;
+      }
+    }
+
+    small{
+      color: #f7f7f7;
+      border-radius: 999px;
+      display: ${({ $collapsed }) => ($collapsed ? 'none' : 'inline-flex')};
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1;
+      max-width: 100%;
+      padding: 5px 10px;
+      white-space: nowrap;
+
+      @media(max-width:700px){
+        display: inline-flex;
+        flex-shrink: 0;
       }
     }
   }
@@ -96,7 +126,7 @@ export const Sidebar = styled.div<SidebarProps>`
   a,
   .logoutButton{
     color: #f7f7f7;
-    padding: 16px;
+    padding: 1rem;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -109,7 +139,7 @@ export const Sidebar = styled.div<SidebarProps>`
     cursor: pointer;
 
     &:hover{
-      background-color: #001438;
+      background-color: #043486;
     }
   }
 
@@ -120,7 +150,7 @@ export const Sidebar = styled.div<SidebarProps>`
 
   .linkText{
     display: ${({ $collapsed }) => ($collapsed ? 'none' : 'inline')};
-
+    font-size: 1rem;
     @media(max-width:700px){
       display: inline;
     }

@@ -1,4 +1,8 @@
-# Getting Started with Create React App
+# Helpdesk
+
+sistema RBAC
+REACT + FIREBASE
+Projeto que estava escondido aqui no pc e refatorei , inserindo o RBAC e typescript, react 17
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

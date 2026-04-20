@@ -6,6 +6,7 @@ import Profile from '../pages/Profile'
 import ResetPassword from '../pages/ResetPassword'
 import SignIn from '../pages/SignIn'
 import SignUp from '../pages/SignUp'
+import { AdminPanel } from '../components/AdminPanel'
 import Private from './Private'
 
 const RoutesApp = () => {
@@ -16,9 +17,10 @@ const RoutesApp = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/dashboard" element={<Private><Dashboard /></Private>} />
       <Route path="/profile" element={<Private><Profile /></Private>} />
-      <Route path="/customers" element={<Private><Customers /></Private>} />
+      <Route path="/customers" element={<Private allowedRoles={['admin']}><Customers /></Private>} />
       <Route path="/new" element={<Private><New /></Private>} />
       <Route path="/new/:id" element={<Private><New /></Private>} />
+      <Route path="/admin" element={<Private allowedRoles={['admin']}><AdminPanel /></Private>} />
     </Routes>
   )
 }

@@ -127,7 +127,7 @@ const Profile = () => {
   }
 
   return (
-    <div>
+    <>
       <Header />
       <Content>
         <Navbar title="Configuracoes">
@@ -165,13 +165,8 @@ const Profile = () => {
             </Button>
           </FormProfile>
         </Container>
-        <div>
-          <Container>
-            <Button variant="outline" onClick={() => logout()}>Sair</Button>
-          </Container>
-        </div>
       </Content>
-    </div>
+    </>
   )
 }
 

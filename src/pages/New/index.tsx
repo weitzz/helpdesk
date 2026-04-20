@@ -8,8 +8,10 @@ import Header from '../../components/Header'
 import Input from '../../components/Input'
 import Navbar from '../../components/Navbar'
 import { AuthContext } from '../../contexts/auth'
+import { usePermissions } from '../../hooks/usePermissions'
 import { database } from '../../services/firebaseConnection'
 import type { Customer, ServiceStatus, ServiceSubject } from '../../types'
+import { canPerformAction } from '../../utils/rbacHelpers'
 import { Container, Content, Form } from './style'
 
 const listRef = collection(database, 'customers')
@@ -25,8 +27,20 @@ const New = () => {
   const [loadingSubmit, setLoadingSubmit] = useState(false)
   const [attendedAt, setAttendedAt] = useState<Date | null>(null)
   const { user } = useContext(AuthContext)
+  const { permissions } = usePermissions()
   const { id } = useParams<'id'>()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!user) {
+      return
+    }
+
+    if (!id && !permissions.canCreateTicket) {
+      toast.error('Seu perfil nao pode criar chamados.')
+      navigate('/dashboard')
+    }
+  }, [id, navigate, permissions.canCreateTicket, user])
 
   useEffect(() => {
     async function loadCalled(list: Customer[]) {
@@ -45,6 +59,16 @@ const New = () => {
         }
 
         const data = snapshot.data()
+
+        if (!user || !permissions.canEditTicket || !canPerformAction('edit', user.role, {
+          clientId: typeof data.clientId === 'string' ? data.clientId : '',
+          userId: typeof data.userId === 'string' ? data.userId : ''
+        }, user.uid)) {
+          toast.error('Seu perfil nao pode editar este chamado.')
+          navigate('/dashboard')
+          return
+        }
+
         const customerIndex = list.findIndex(
           (item) => item.id === data.clientId || item.nameCustomers === data.client
         )
@@ -98,7 +122,7 @@ const New = () => {
     }
 
     void loadCustomers()
-  }, [id, navigate])
+  }, [id, navigate, permissions.canEditTicket, user])
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -177,6 +201,8 @@ const New = () => {
             <label>Cliente</label>
             {loadCustomers ? (
               <Input type="text" disabled placeholder="Carregando..." />
+            ) : customers.length === 0 ? (
+              <Input type="text" disabled placeholder="Nenhum cliente cadastrado" />
             ) : (
               <select value={customerSelected} onChange={handleChangeCustomers}>
                 {customers.map((item, index) => (

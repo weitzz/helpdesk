@@ -1,12 +1,15 @@
 import { useContext, useEffect, useState } from 'react'
-import { FaBars, FaCog, FaHome, FaSignOutAlt, FaUserAlt } from 'react-icons/fa'
+import { FaBars, FaCog, FaHome, FaShieldAlt, FaSignOutAlt, FaUserAlt } from 'react-icons/fa'
 import { Link, useNavigate } from 'react-router-dom'
-import Avatar from '../../assets/avatar2.jpg'
+import Avatar from '../../assets/UserAvatar.png'
 import { AuthContext } from '../../contexts/auth'
+import { usePermissions } from '../../hooks/usePermissions'
+import { getRoleColor, getRoleLabel } from '../../utils/rbacHelpers'
 import { Sidebar } from './style'
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext)
+  const { hasPermission, hasRole } = usePermissions()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true')
   const [avatarSrc, setAvatarSrc] = useState(Avatar)
   const navigate = useNavigate()
@@ -65,28 +68,41 @@ const Header = () => {
         <img src={avatarSrc} alt="Foto avatar" onError={() => setAvatarSrc(Avatar)} />
       </div>
 
-      <main>
+      <main className='userInfo'>
         <span>{user?.name ?? ''}</span>
+        {user && (
+          <small style={{ color: getRoleColor(user.role) }}>
+            {getRoleLabel(user.role)}
+          </small>
+        )}
       </main>
 
       <Link to="/dashboard">
         <FaHome color="#f7f7f7" size={22} />
         <span className="linkText">Chamados</span>
       </Link>
-      <Link to="/customers">
-        <FaUserAlt color="#f7f7f7" size={22} />
-        <span className="linkText">Clientes</span>
-      </Link>
+      {hasPermission('canViewCustomers') && (
+        <Link to="/customers">
+          <FaUserAlt color="#f7f7f7" size={22} />
+          <span className="linkText">Clientes</span>
+        </Link>
+      )}
+      {hasRole('admin') && (
+        <Link to="/admin">
+          <FaShieldAlt color="#f7f7f7" size={22} />
+          <span className="linkText">Admin</span>
+        </Link>
+      )}
       <Link to="/profile">
         <FaCog color="#f7f7f7" size={22} />
         <span className="linkText">Configuracoes</span>
       </Link>
-      <div>
-        <button type="button" className="logoutButton" onClick={handleLogout}>
-          <FaSignOutAlt color="#f7f7f7" size={22} />
-          <span className="linkText">Sair</span>
-        </button>
-      </div>
+
+      <button type="button" className="logoutButton" onClick={handleLogout}>
+        <FaSignOutAlt color="#f7f7f7" size={22} />
+        <span className="linkText">Sair</span>
+      </button>
+
     </Sidebar>
   )
 }

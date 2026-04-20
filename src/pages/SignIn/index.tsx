@@ -1,7 +1,7 @@
 import { FormEvent, useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Container, Form, HelperLink, LogoContainer, LoginContainer } from './style'
-import logo from '../../assets/avatar2.jpg'
+import logo from '../../assets/UserAvatar.png'
 import Button from '../../components/Button'
 import Input from '../../components/Input'
 import { AuthContext } from '../../contexts/auth'
