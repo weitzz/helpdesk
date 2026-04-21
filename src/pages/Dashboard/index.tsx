@@ -9,7 +9,7 @@ import { AuthContext } from '../../contexts/auth'
 import { usePermissions } from '../../hooks/usePermissions'
 import { database } from '../../services/firebaseConnection'
 import type { ServiceCall, ServiceDateValue, ServiceStatus, ServiceSubject } from '../../types'
-import { canPerformAction, filterCallsByRole, getRoleColor, getRoleLabel } from '../../utils/rbacHelpers'
+import { canPerformAction, filterCallsByRole, getRoleColor, getRoleLabel, getStatusColor } from '../../utils/rbacHelpers'
 import {
   BtnLink,
   CompanySection,
@@ -22,6 +22,7 @@ import {
   Pagination,
   Table
 } from './style'
+import Badge from '../../components/Badge'
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext)
@@ -199,19 +200,10 @@ const Dashboard = () => {
                         <td data-label="Cliente">{item.client}</td>
                         <td data-label="Assunto">{item.subject}</td>
                         <td data-label="Status">
-                          <span
-                            className="badge"
-                            style={{
-                              backgroundColor: item.status === 'Aberto'
-                                ? '#55ac55'
-                                : item.status === 'Progresso'
-                                  ? '#999'
-                                  : '#5c5cfc'
-                            }}
-                          >
-                            {item.status}
-                          </span>
+                          <Badge label={item.status} color={getStatusColor(item.status)} />
                         </td>
+                        <td data-label="date">{formatDate(item.created)}</td>
+                        <td data-label="Atendido em">{formatDate(item.attendedAt)}</td>
                         <td data-label="date">{formatDate(item.created)}</td>
                         <td data-label="Atendido em">{formatDate(item.attendedAt)}</td>
                         <td data-label="#">

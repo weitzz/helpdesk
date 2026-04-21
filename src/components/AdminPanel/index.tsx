@@ -1,55 +1,45 @@
 import { useContext, useEffect, useState } from 'react'
-import { collection, doc, getDocs, updateDoc } from 'firebase/firestore'
+import { collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore'
 import { toast } from 'react-toastify'
 import { AuthContext } from '../../contexts/auth'
 import { ProtectedByRole } from '../ProtectedAccess'
 import { database } from '../../services/firebaseConnection'
-import type { UserData, UserRole } from '../../types'
-import { getRoleColor, getRoleLabel } from '../../utils/rbacHelpers'
+import type { ServiceCall, ServiceDateValue, ServiceStatus, ServiceSubject, UserData, UserRole } from '../../types'
+import { getRoleColor, getRoleLabel, getStatusColor } from '../../utils/rbacHelpers'
 import Header from '../Header'
 import Navbar from '../Navbar'
 import { FaShieldAlt } from 'react-icons/fa'
-import styled from 'styled-components'
-
-export const Content = styled.div`
-  margin-left: var(--sidebar-width, 200px);
-  padding: 1px 16px;
-
-  @media(max-width:700px){
-   margin-left: 0;
-  }
-`
-
-export const Container = styled.div`
-  margin-top: 30px;
-  display: flex;
-  background: #f7f7f7;
-  border-radius: 4px;
-  padding: 10px;
-  align-items: center;
-  justify-content: center;
-`
+import { Content } from './style'
+import Table from '../Table'
+import { ContainerInfos } from '../ContainerInfos'
+import Badge from '../Badge'
 
 
 export function AdminPanel() {
   const { user } = useContext(AuthContext)
   const [users, setUsers] = useState<UserData[]>([])
+  const [calls, setCalls] = useState<ServiceCall[]>([])
+  const [callAssignments, setCallAssignments] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [selectedUser, setSelectedUser] = useState<string | null>(null)
   const [newRole, setNewRole] = useState<UserRole>('cliente')
 
   useEffect(() => {
     if (user?.role === 'admin') {
-      void loadUsers()
+      void loadAdminData()
     }
   }, [user?.role])
 
-  async function loadUsers() {
+  async function loadAdminData() {
     setLoading(true)
 
     try {
-      const snapshot = await getDocs(collection(database, 'users'))
-      const usersList: UserData[] = snapshot.docs.map((userDoc) => {
+      const [usersSnapshot, callsSnapshot] = await Promise.all([
+        getDocs(collection(database, 'users')),
+        getDocs(query(collection(database, 'chamados'), orderBy('created', 'desc')))
+      ])
+
+      const usersList: UserData[] = usersSnapshot.docs.map((userDoc) => {
         const data = userDoc.data()
 
         return {
@@ -63,10 +53,28 @@ export function AdminPanel() {
         }
       })
 
+      const callsList: ServiceCall[] = callsSnapshot.docs.map((callDoc) => {
+        const data = callDoc.data()
+
+        return {
+          id: callDoc.id,
+          client: typeof data.client === 'string' ? data.client : '',
+          clientId: typeof data.clientId === 'string' ? data.clientId : '',
+          subject: (data.subject as ServiceSubject) || 'Suporte',
+          status: (data.status as ServiceStatus) || 'Aberto',
+          created: data.created ?? null,
+          attendedAt: data.attendedAt ?? null,
+          descriptions: typeof data.descriptions === 'string' ? data.descriptions : '',
+          userId: typeof data.userId === 'string' ? data.userId : ''
+        }
+      })
+
       setUsers(usersList)
+      setCalls(callsList)
+      setCallAssignments(Object.fromEntries(callsList.map((call) => [call.id, call.userId])))
     } catch (error) {
-      console.error('Erro ao carregar usuarios:', error)
-      toast.error('Erro ao carregar usuarios.')
+      console.error('Erro ao carregar dados do admin:', error)
+      toast.error('Erro ao carregar dados do painel.')
     } finally {
       setLoading(false)
     }
@@ -86,6 +94,55 @@ export function AdminPanel() {
       toast.error('Erro ao atualizar role do usuario.')
     }
   }
+
+  async function assignCallToTechnician(callId: string) {
+    const technicianId = callAssignments[callId]
+
+    if (!technicianId) {
+      toast.info('Selecione um tecnico para atribuir o chamado.')
+      return
+    }
+
+    try {
+      await updateDoc(doc(database, 'chamados', callId), { userId: technicianId })
+
+      setCalls((prevState) => prevState.map((item) => (
+        item.id === callId ? { ...item, userId: technicianId } : item
+      )))
+      toast.success('Chamado atribuido ao tecnico com sucesso!')
+    } catch (error) {
+      console.error('Erro ao atribuir chamado:', error)
+      toast.error('Erro ao atribuir chamado ao tecnico.')
+    }
+  }
+
+  function handleAssignmentChange(callId: string, technicianId: string) {
+    setCallAssignments((prevState) => ({
+      ...prevState,
+      [callId]: technicianId
+    }))
+  }
+
+  function getAssignedTechnicianName(userId: string) {
+    const account = users.find((userItem) => userItem.uid === userId)
+
+    return account?.role === 'tecnico' ? account.name : 'Nao atribuido'
+  }
+
+  function formatDate(created: ServiceDateValue) {
+    if (!created) {
+      return '--'
+    }
+
+    if (typeof created === 'object' && created !== null && 'toDate' in created && typeof created.toDate === 'function') {
+      return created.toDate().toLocaleDateString('pt-BR')
+    }
+
+    const date = created instanceof Date ? created : new Date(String(created))
+    return date.toLocaleDateString('pt-BR')
+  }
+
+  const technicians = users.filter((account) => account.role === 'tecnico')
 
   return (
     <>
@@ -113,13 +170,14 @@ export function AdminPanel() {
               </p>
               <p>Total de usuarios no sistema: <strong>{users.length}</strong></p>
             </div>
-
+            <ContainerInfos />
             {loading ? (
               <p>Carregando usuarios...</p>
             ) : users.length === 0 ? (
               <p>Nenhum usuario encontrado.</p>
             ) : (
               <div>
+                <Table columns={[]} data={[]} />
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#333', color: '#fff' }}>
@@ -141,16 +199,8 @@ export function AdminPanel() {
                           {account.email ?? 'Nao informado'}
                         </td>
                         <td style={{ border: '1px solid #ddd', padding: '12px' }}>
-                          <span
-                            style={{
-                              backgroundColor: getRoleColor(account.role),
-                              color: '#fff',
-                              padding: '4px 8px',
-                              borderRadius: '4px'
-                            }}
-                          >
-                            {getRoleLabel(account.role)}
-                          </span>
+
+                          <Badge label={getRoleLabel(account.role)} color={getRoleColor(account.role)} />
                         </td>
                         <td style={{ border: '1px solid #ddd', padding: '12px' }}>
                           {account.uid === selectedUser ? (
@@ -225,13 +275,71 @@ export function AdminPanel() {
                   </tbody>
                 </table>
 
-                <div style={{ backgroundColor: '#fff3cd', padding: '15px', borderRadius: '8px' }}>
-                  <h4>Permissoes por role</h4>
-                  <ul>
-                    <li><strong>Cliente:</strong> pode criar e acompanhar os proprios chamados.</li>
-                    <li><strong>Tecnico:</strong> pode atuar nos chamados atribuidos a ele.</li>
-                    <li><strong>Admin:</strong> possui acesso completo ao sistema.</li>
-                  </ul>
+                <div style={{ backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+                  <h3>Atribuir chamados para tecnicos</h3>
+                  {technicians.length === 0 ? (
+                    <p>Nenhum tecnico cadastrado. Altere o role de um usuario para Tecnico antes de atribuir chamados.</p>
+                  ) : calls.length === 0 ? (
+                    <p>Nenhum chamado encontrado.</p>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '12px' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#333', color: '#fff' }}>
+                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Cliente</th>
+                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Assunto</th>
+                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Status</th>
+                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Criado em</th>
+                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Tecnico atual</th>
+                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Atribuir para</th>
+                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Acao</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {calls.map((call) => (
+                          <tr key={call.id} style={{ backgroundColor: '#fff' }}>
+                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{call.client}</td>
+                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{call.subject}</td>
+                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>
+                              <Badge label={call.status} color={getStatusColor(call.status)} />
+                            </td>
+                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{formatDate(call.created)}</td>
+                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{getAssignedTechnicianName(call.userId)}</td>
+                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>
+                              <select
+                                value={callAssignments[call.id] ?? ''}
+                                onChange={(event) => handleAssignmentChange(call.id, event.target.value)}
+                                style={{ padding: '6px', width: '100%' }}
+                              >
+                                <option value="">Selecione um tecnico</option>
+                                {technicians.map((technician) => (
+                                  <option key={technician.uid} value={technician.uid}>
+                                    {technician.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => assignCallToTechnician(call.id)}
+                                disabled={(callAssignments[call.id] ?? '') === call.userId}
+                                style={{
+                                  backgroundColor: (callAssignments[call.id] ?? '') === call.userId ? '#999' : '#2196f3',
+                                  color: '#fff',
+                                  border: 'none',
+                                  padding: '8px 12px',
+                                  borderRadius: '4px',
+                                  cursor: (callAssignments[call.id] ?? '') === call.userId ? 'not-allowed' : 'pointer'
+                                }}
+                              >
+                                Atribuir
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             )}

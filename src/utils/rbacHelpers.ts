@@ -91,6 +91,16 @@ export function getRoleColor(role: UserRole): string {
   return colors[role]
 }
 
+export function getStatusColor(status: string): string {
+  const colors: Record<string, string> = {
+    Aberto: '#55ac55',
+    Progresso: '#999',
+    Atendido: '#5c5cfc'
+  }
+  return colors[status]
+}
+
+
 /**
  * Constrói query de filtro para Firestore baseado no role
  */

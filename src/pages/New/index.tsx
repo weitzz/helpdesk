@@ -10,7 +10,7 @@ import Navbar from '../../components/Navbar'
 import { AuthContext } from '../../contexts/auth'
 import { usePermissions } from '../../hooks/usePermissions'
 import { database } from '../../services/firebaseConnection'
-import type { Customer, ServiceStatus, ServiceSubject } from '../../types'
+import type { Customer, ServiceStatus, ServiceSubject, UserData } from '../../types'
 import { canPerformAction } from '../../utils/rbacHelpers'
 import { Container, Content, Form } from './style'
 
@@ -18,7 +18,9 @@ const listRef = collection(database, 'customers')
 
 const New = () => {
   const [loadCustomers, setLoadCustomers] = useState(true)
+  const [loadTechnicians, setLoadTechnicians] = useState(true)
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [technicians, setTechnicians] = useState<UserData[]>([])
   const [customerSelected, setCustomerSelected] = useState(0)
   const [subject, setSubject] = useState<ServiceSubject>('Suporte')
   const [status, setStatus] = useState<ServiceStatus>('Aberto')
@@ -26,6 +28,7 @@ const New = () => {
   const [isEdit, setIsEdit] = useState(false)
   const [loadingSubmit, setLoadingSubmit] = useState(false)
   const [attendedAt, setAttendedAt] = useState<Date | null>(null)
+  const [assignedUserId, setAssignedUserId] = useState('')
   const { user } = useContext(AuthContext)
   const { permissions } = usePermissions()
   const { id } = useParams<'id'>()
@@ -43,7 +46,7 @@ const New = () => {
   }, [id, navigate, permissions.canCreateTicket, user])
 
   useEffect(() => {
-    async function loadCalled(list: Customer[]) {
+    async function loadCalled(list: Customer[], technicianList: UserData[]) {
       if (!id) {
         return
       }
@@ -77,6 +80,10 @@ const New = () => {
         setStatus((data.status as ServiceStatus) || 'Aberto')
         setDescriptions(typeof data.descriptions === 'string' ? data.descriptions : '')
         setAttendedAt(data.attendedAt?.toDate ? data.attendedAt.toDate() : null)
+        const currentAssignedUserId = typeof data.userId === 'string' ? data.userId : ''
+        const hasAssignedTechnician = technicianList.some((technician) => technician.uid === currentAssignedUserId)
+
+        setAssignedUserId(hasAssignedTechnician ? currentAssignedUserId : '')
         setIsEdit(true)
 
         if (customerIndex >= 0) {
@@ -88,12 +95,16 @@ const New = () => {
       }
     }
 
-    async function loadCustomers() {
+    async function loadFormData() {
       try {
-        const snapshot = await getDocs(listRef)
+        const [customersSnapshot, usersSnapshot] = await Promise.all([
+          getDocs(listRef),
+          getDocs(collection(database, 'users'))
+        ])
         const list: Customer[] = []
+        const technicianList: UserData[] = []
 
-        snapshot.forEach((item) => {
+        customersSnapshot.forEach((item) => {
           const data = item.data()
 
           list.push({
@@ -104,24 +115,43 @@ const New = () => {
           })
         })
 
+        usersSnapshot.forEach((item) => {
+          const data = item.data()
+
+          if (data.role !== 'tecnico') {
+            return
+          }
+
+          technicianList.push({
+            uid: item.id,
+            name: typeof data.name === 'string' ? data.name : '',
+            email: typeof data.email === 'string' ? data.email : null,
+            avatarUrl: typeof data.avatarUrl === 'string' ? data.avatarUrl : null,
+            role: 'tecnico'
+          })
+        })
+
         setCustomers(list)
+        setTechnicians(technicianList)
 
         if (list.length === 0) {
           return
         }
 
         if (id) {
-          await loadCalled(list)
+          await loadCalled(list, technicianList)
         }
       } catch (error) {
         setCustomers([])
+        setTechnicians([])
         toast.error('Erro ao buscar clientes.')
       } finally {
         setLoadCustomers(false)
+        setLoadTechnicians(false)
       }
     }
 
-    void loadCustomers()
+    void loadFormData()
   }, [id, navigate, permissions.canEditTicket, user])
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
@@ -136,6 +166,16 @@ const New = () => {
       return
     }
 
+    if (technicians.length === 0) {
+      toast.info('Cadastre um tecnico antes de atribuir o chamado.')
+      return
+    }
+
+    if (!assignedUserId) {
+      toast.info('Selecione um tecnico para atribuir o chamado.')
+      return
+    }
+
     setLoadingSubmit(true)
 
     try {
@@ -146,7 +186,7 @@ const New = () => {
         subject,
         status,
         descriptions,
-        userId: user.uid,
+        userId: assignedUserId,
         attendedAt: status === 'Atendido'
           ? attendedAt || new Date()
           : null
@@ -170,6 +210,7 @@ const New = () => {
       setSubject('Suporte')
       setStatus('Aberto')
       setAttendedAt(null)
+      setAssignedUserId('')
     } catch (error) {
       toast.error('Ops erro ao salvar chamado, tente mais tarde.')
     } finally {
@@ -187,6 +228,10 @@ const New = () => {
 
   const handleChangeCustomers = (event: ChangeEvent<HTMLSelectElement>) => {
     setCustomerSelected(Number(event.target.value))
+  }
+
+  const handleChangeTechnicians = (event: ChangeEvent<HTMLSelectElement>) => {
+    setAssignedUserId(event.target.value)
   }
 
   return (
@@ -219,6 +264,23 @@ const New = () => {
               <option value="Visita Tecnica">Visita Tecnica</option>
               <option value="Financeiro">Financeiro</option>
             </select>
+
+            <label>Tecnico</label>
+            {loadTechnicians ? (
+              <Input type="text" disabled placeholder="Carregando..." />
+            ) : technicians.length === 0 ? (
+              <Input type="text" disabled placeholder="Nenhum tecnico cadastrado" />
+            ) : (
+              <select value={assignedUserId} onChange={handleChangeTechnicians}>
+                <option value="">Selecione um tecnico</option>
+                {technicians.map((technician) => (
+                  <option key={technician.uid} value={technician.uid}>
+                    {technician.name || technician.email || 'Tecnico sem nome'}
+                  </option>
+                ))}
+              </select>
+            )}
+
             <label>Status</label>
             <div className="status">
               <input
