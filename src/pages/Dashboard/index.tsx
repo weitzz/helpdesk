@@ -19,10 +19,10 @@ import {
   FilterBar,
   ModalContent,
   ModalOverlay,
-  Pagination,
   Table
 } from './style'
 import Badge from '../../components/Badge'
+import Pagination from '../../components/Pagination'
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext)
@@ -232,27 +232,11 @@ const Dashboard = () => {
               </CompanySection>
             ))}
 
-            <Pagination>
-              <span>
-                Pagina {currentPage} de {totalPages}
-              </span>
-              <div>
-                <button
-                  type="button"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((page) => page - 1)}
-                >
-                  Anterior
-                </button>
-                <button
-                  type="button"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((page) => page + 1)}
-                >
-                  Proxima
-                </button>
-              </div>
-            </Pagination>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </>
         )}
       </Content>
