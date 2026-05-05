@@ -176,35 +176,32 @@ export const Table = styled.table`
   }
 
   @media screen and (max-width: 600px){
+     border: none;
+  font-size: 1em;
     thead{
-      border: none;
-      clip: rect(0 0 0 0);
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      padding: 0;
-      position: absolute;
-      width: 1px;
+     display: none;
     }
 
     tr{
-      border-bottom: 3px solid #ddd;
-      display: block;
-      margin-bottom: .65em;
+       display: block;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px;
     }
 
     td{
-      border-bottom: 1px solid #ddd;
-      display: block;
-      font-size: .8em;
-      text-align: right;
+      display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    font-size: .9em;
+    padding: 8px 4px;
     }
 
     td:before{
       content: attr(data-label);
-      float: left;
       font-weight: 600;
-      text-transform: uppercase;
     }
 
     td:last-child{

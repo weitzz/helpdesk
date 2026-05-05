@@ -11,6 +11,7 @@ import Navbar from '../Navbar'
 import { FaShieldAlt } from 'react-icons/fa'
 import { Content } from './style'
 import Table from '../Table'
+import type { Column } from '../Table'
 import { ContainerInfos } from '../ContainerInfos'
 import Badge from '../Badge'
 
@@ -143,6 +144,172 @@ export function AdminPanel() {
   }
 
   const technicians = users.filter((account) => account.role === 'tecnico')
+  const userTableColumns: Column<UserData>[] = [
+    {
+      key: 'name',
+      label: 'Nome',
+      render: (value: string, row: UserData) => (
+        <>
+          <strong>{value}</strong>
+          {row.uid === user?.uid && <span style={{ color: '#999' }}> (voce)</span>}
+        </>
+      )
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      render: (value: string | null) => value ?? 'Nao informado'
+    },
+    {
+      key: 'role',
+      label: 'Role atual',
+      render: (value: UserRole) => (
+        <Badge label={getRoleLabel(value)} color={getRoleColor(value)} />
+      )
+    },
+    {
+      key: 'avatarUrl',
+      label: 'Alterar para',
+      render: (_value: string | null, row: UserData) => (
+        row.uid === selectedUser ? (
+          <select
+            value={newRole}
+            onChange={(event) => setNewRole(event.target.value as UserRole)}
+            style={{ padding: '6px' }}
+          >
+            <option value="cliente">Cliente</option>
+            <option value="tecnico">Tecnico</option>
+            <option value="admin">Admin</option>
+          </select>
+        ) : (
+          <span style={{ color: '#999' }}>-</span>
+        )
+      )
+    },
+    {
+      key: 'uid',
+      label: 'Acoes',
+      render: (value: string, row: UserData) => (
+        row.uid === selectedUser ? (
+          <>
+            <button
+              type="button"
+              onClick={() => updateUserRole(value, newRole)}
+              style={{
+                backgroundColor: '#4caf50',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginRight: '5px'
+              }}
+            >
+              Confirmar
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedUser(null)}
+              style={{
+                backgroundColor: '#999',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancelar
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedUser(value)
+              setNewRole(row.role)
+            }}
+            style={{
+              backgroundColor: '#2196f3',
+              color: '#fff',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Editar
+          </button>
+        )
+      )
+    }
+  ]
+  const callsTableColumns: Column<ServiceCall>[] = [
+    {
+      key: 'client',
+      label: 'Cliente'
+    },
+    {
+      key: 'subject',
+      label: 'Assunto'
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (value: ServiceStatus) => (
+        <Badge label={value} color={getStatusColor(value)} />
+      )
+    },
+    {
+      key: 'created',
+      label: 'Criado em',
+      render: (value: ServiceDateValue) => formatDate(value)
+    },
+    {
+      key: 'userId',
+      label: 'Tecnico atual',
+      render: (value: string) => getAssignedTechnicianName(value)
+    },
+    {
+      key: 'id',
+      label: 'Atribuir para',
+      render: (value: string) => (
+        <select
+          value={callAssignments[value] ?? ''}
+          onChange={(event) => handleAssignmentChange(value, event.target.value)}
+          style={{ padding: '6px', width: '100%' }}
+        >
+          <option value="">Selecione um tecnico</option>
+          {technicians.map((technician) => (
+            <option key={technician.uid} value={technician.uid}>
+              {technician.name}
+            </option>
+          ))}
+        </select>
+      )
+    },
+    {
+      key: 'clientId',
+      label: 'Acao',
+      render: (_value: string, row: ServiceCall) => (
+        <button
+          type="button"
+          onClick={() => assignCallToTechnician(row.id)}
+          disabled={(callAssignments[row.id] ?? '') === row.userId}
+          style={{
+            backgroundColor: (callAssignments[row.id] ?? '') === row.userId ? '#999' : '#2196f3',
+            color: '#fff',
+            border: 'none',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            cursor: (callAssignments[row.id] ?? '') === row.userId ? 'not-allowed' : 'pointer'
+          }}
+        >
+          Atribuir
+        </button>
+      )
+    }
+  ]
 
   return (
     <>
@@ -177,104 +344,9 @@ export function AdminPanel() {
               <p>Nenhum usuario encontrado.</p>
             ) : (
               <div>
-                <Table columns={[]} data={[]} />
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#333', color: '#fff' }}>
-                      <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Nome</th>
-                      <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Email</th>
-                      <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Role atual</th>
-                      <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Alterar para</th>
-                      <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Acoes</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((account) => (
-                      <tr key={account.uid} style={{ backgroundColor: account.uid === selectedUser ? '#f9f9f9' : '#fff' }}>
-                        <td style={{ border: '1px solid #ddd', padding: '12px' }}>
-                          <strong>{account.name}</strong>
-                          {account.uid === user?.uid && <span style={{ color: '#999' }}> (voce)</span>}
-                        </td>
-                        <td style={{ border: '1px solid #ddd', padding: '12px' }}>
-                          {account.email ?? 'Nao informado'}
-                        </td>
-                        <td style={{ border: '1px solid #ddd', padding: '12px' }}>
-
-                          <Badge label={getRoleLabel(account.role)} color={getRoleColor(account.role)} />
-                        </td>
-                        <td style={{ border: '1px solid #ddd', padding: '12px' }}>
-                          {account.uid === selectedUser ? (
-                            <select
-                              value={newRole}
-                              onChange={(event) => setNewRole(event.target.value as UserRole)}
-                              style={{ padding: '6px' }}
-                            >
-                              <option value="cliente">Cliente</option>
-                              <option value="tecnico">Tecnico</option>
-                              <option value="admin">Admin</option>
-                            </select>
-                          ) : (
-                            <span style={{ color: '#999' }}>-</span>
-                          )}
-                        </td>
-                        <td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>
-                          {account.uid === selectedUser ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => updateUserRole(account.uid, newRole)}
-                                style={{
-                                  backgroundColor: '#4caf50',
-                                  color: '#fff',
-                                  border: 'none',
-                                  padding: '8px 12px',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  marginRight: '5px'
-                                }}
-                              >
-                                Confirmar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedUser(null)}
-                                style={{
-                                  backgroundColor: '#999',
-                                  color: '#fff',
-                                  border: 'none',
-                                  padding: '8px 12px',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                Cancelar
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedUser(account.uid)
-                                setNewRole(account.role)
-                              }}
-                              style={{
-                                backgroundColor: '#2196f3',
-                                color: '#fff',
-                                border: 'none',
-                                padding: '8px 12px',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              Editar
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
+                <div style={{ marginBottom: '20px' }}>
+                  <Table<UserData> columns={userTableColumns} data={users} />
+                </div>
                 <div style={{ backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
                   <h3>Atribuir chamados para tecnicos</h3>
                   {technicians.length === 0 ? (
@@ -282,63 +354,9 @@ export function AdminPanel() {
                   ) : calls.length === 0 ? (
                     <p>Nenhum chamado encontrado.</p>
                   ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '12px' }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#333', color: '#fff' }}>
-                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Cliente</th>
-                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Assunto</th>
-                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Status</th>
-                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Criado em</th>
-                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Tecnico atual</th>
-                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Atribuir para</th>
-                          <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Acao</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {calls.map((call) => (
-                          <tr key={call.id} style={{ backgroundColor: '#fff' }}>
-                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{call.client}</td>
-                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{call.subject}</td>
-                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>
-                              <Badge label={call.status} color={getStatusColor(call.status)} />
-                            </td>
-                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{formatDate(call.created)}</td>
-                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{getAssignedTechnicianName(call.userId)}</td>
-                            <td style={{ border: '1px solid #ddd', padding: '12px' }}>
-                              <select
-                                value={callAssignments[call.id] ?? ''}
-                                onChange={(event) => handleAssignmentChange(call.id, event.target.value)}
-                                style={{ padding: '6px', width: '100%' }}
-                              >
-                                <option value="">Selecione um tecnico</option>
-                                {technicians.map((technician) => (
-                                  <option key={technician.uid} value={technician.uid}>
-                                    {technician.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </td>
-                            <td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                onClick={() => assignCallToTechnician(call.id)}
-                                disabled={(callAssignments[call.id] ?? '') === call.userId}
-                                style={{
-                                  backgroundColor: (callAssignments[call.id] ?? '') === call.userId ? '#999' : '#2196f3',
-                                  color: '#fff',
-                                  border: 'none',
-                                  padding: '8px 12px',
-                                  borderRadius: '4px',
-                                  cursor: (callAssignments[call.id] ?? '') === call.userId ? 'not-allowed' : 'pointer'
-                                }}
-                              >
-                                Atribuir
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <div style={{ marginTop: '12px' }}>
+                      <Table<ServiceCall> columns={callsTableColumns} data={calls} />
+                    </div>
                   )}
                 </div>
               </div>

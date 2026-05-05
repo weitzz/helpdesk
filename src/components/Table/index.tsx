@@ -1,5 +1,5 @@
 import { Table as StyledTable } from './style'
-type Column<T> = {
+export type Column<T> = {
     key: keyof T;
     label: string;
     render?: (value: any, row: T) => React.ReactNode;
@@ -11,7 +11,7 @@ type TableProps<T> = {
 };
 
 
-const Table = <T extends Record<string, unknown>>({ columns, data }: TableProps<T>) => {
+const Table = <T extends object>({ columns, data }: TableProps<T>) => {
     return (
         <StyledTable>
             <thead>

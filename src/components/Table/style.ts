@@ -24,10 +24,13 @@ export const Table = styled.table`
       width: 1px;
     }
 
+
     tr{
-      border-bottom: 3px solid #ddd;
+      border-bottom: 1px solid #ddd;
       display: block;
       margin-bottom: .65em;
+      background-color: #333;
+      color: #000;
     }
 
     td{
