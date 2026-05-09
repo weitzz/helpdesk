@@ -14,6 +14,7 @@ import Table from '../Table'
 import type { Column } from '../Table'
 import { ContainerInfos } from '../ContainerInfos'
 import Badge from '../Badge'
+import SummaryCard from '../SummaryCard'
 
 
 export function AdminPanel() {
@@ -327,16 +328,23 @@ export function AdminPanel() {
           }
         >
           <div style={{ padding: '20px' }}>
-            <div style={{ backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-              <h3>Resumo</h3>
-              <p>
-                <strong>Usuario logado:</strong> {user?.name}{' '}
-                <strong style={{ color: getRoleColor('admin') }}>
-                  ({getRoleLabel('admin')})
-                </strong>
-              </p>
-              <p>Total de usuarios no sistema: <strong>{users.length}</strong></p>
-            </div>
+            <SummaryCard title='Resumo' items={[{
+              label: "Usuário logado",
+              value: (
+                <>
+                  {user?.name}{' '}
+                  <strong style={{ color: getRoleColor('admin') }}>
+                    ({getRoleLabel('admin')})
+                  </strong>
+                </>
+              )
+            },
+            {
+              label: "Total de usuarios no sistema",
+              value: <strong>{users.length}</strong>
+            }
+
+            ]} />
             <ContainerInfos />
             {loading ? (
               <p>Carregando usuarios...</p>

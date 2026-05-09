@@ -1,8 +1,16 @@
-# Sistema Helpdesk
+# ⚠️ Sistema Helpdesk
+
+### Deploy https://sistema-c4fa8.web.app/
 
 Aplicacao web de helpdesk desenvolvida com React, TypeScript e Firebase para cadastro, acompanhamento e administracao de chamados. O projeto foi refatorado com RBAC, tipagem em TypeScript e componentes reutilizaveis para manter a interface mais consistente.
 
-![Preview do sistema](./public/helpdesk.png)
+### Chamados
+
+![Preview do sistema](./public/dashboard.png)
+
+### Painel de Administração
+
+![Preview do sistema](./public/adminpainel.png)
 
 ## Visao geral
 

@@ -77,27 +77,70 @@ export const ContainerBtn = styled.div`
 export const FilterBar = styled.div`
   margin: 20px 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 12px;
   background: #f7f7f7;
   border-radius: 4px;
   padding: 16px;
+
+  .filterGroup{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 220px;
+    flex: 1;
+  }
+
+  .searchGroup{
+    flex: 1.4;
+  }
 
   label{
     font-weight: 600;
     color: #181c2e;
   }
 
-  select{
-    min-width: 240px;
+  select,
+  input{
     padding: 10px;
     border-radius: 4px;
     border: 1px solid #d9d9d9;
+    background: #fff;
+    color: #181c2e;
   }
 
   @media(max-width: 700px){
-    flex-direction: column;
-    align-items: stretch;
+    .filterGroup,
+    .searchGroup{
+      min-width: 100%;
+    }
+  }
+`
+
+export const OverviewGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+`
+
+export const OverviewCard = styled.div<{ color: string }>`
+  background: #f7f7f7;
+  border-radius: 6px;
+  padding: 18px;
+  border-left: 4px solid ${({ color }) => color};
+
+  strong{
+    display: block;
+    font-size: 1.7rem;
+    color: #181c2e;
+    margin-bottom: 6px;
+  }
+
+  span{
+    color: #666;
+    font-size: 0.95rem;
   }
 `
 
@@ -116,6 +159,11 @@ export const CompanySection = styled.section`
     color: #666;
     margin-bottom: 16px;
   }
+`
+
+export const ResultsInfo = styled.p`
+  color: #666;
+  margin-bottom: 16px;
 `
 
 export const Pagination = styled.div`

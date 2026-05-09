@@ -19,10 +19,14 @@ import {
   FilterBar,
   ModalContent,
   ModalOverlay,
+  ResultsInfo,
+  OverviewGrid,
+  OverviewCard,
   Table
 } from './style'
 import Badge from '../../components/Badge'
 import Pagination from '../../components/Pagination'
+import SummaryCards from '../../components/SummaryCard'
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext)
@@ -31,6 +35,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [detail, setDetail] = useState<ServiceCall | null>(null)
   const [selectedClient, setSelectedClient] = useState('todos')
+  const [selectedStatus, setSelectedStatus] = useState<'todos' | ServiceStatus>('todos')
+  const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 6
 
@@ -95,25 +101,32 @@ const Dashboard = () => {
     : []
 
   const clientOptions = Array.from(new Set(visibleServices.map((item) => item.client)))
+  const statusOptions = Array.from(new Set(visibleServices.map((item) => item.status)))
   const filteredServices = selectedClient === 'todos'
     ? visibleServices
     : visibleServices.filter((item) => item.client === selectedClient)
+  const servicesByStatus = selectedStatus === 'todos'
+    ? filteredServices
+    : filteredServices.filter((item) => item.status === selectedStatus)
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase()
+  const searchedServices = normalizedSearchTerm === ''
+    ? servicesByStatus
+    : servicesByStatus.filter((item) => (
+      item.client.toLowerCase().includes(normalizedSearchTerm)
+      || item.subject.toLowerCase().includes(normalizedSearchTerm)
+      || item.descriptions.toLowerCase().includes(normalizedSearchTerm)
+    ))
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [selectedClient])
+  }, [selectedClient, selectedStatus, searchTerm])
 
-  const totalPages = Math.max(1, Math.ceil(filteredServices.length / itemsPerPage))
+  const totalPages = Math.max(1, Math.ceil(searchedServices.length / itemsPerPage))
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedServices = filteredServices.slice(startIndex, startIndex + itemsPerPage)
-  const groupedServices = paginatedServices.reduce<Record<string, ServiceCall[]>>((acc, item) => {
-    if (!acc[item.client]) {
-      acc[item.client] = []
-    }
-
-    acc[item.client].push(item)
-    return acc
-  }, {})
+  const paginatedServices = searchedServices.slice(startIndex, startIndex + itemsPerPage)
+  const openCount = searchedServices.filter((item) => item.status === 'Aberto').length
+  const inProgressCount = searchedServices.filter((item) => item.status === 'Progresso').length
+  const attendedCount = searchedServices.filter((item) => item.status === 'Atendido').length
 
   return (
     <>
@@ -139,18 +152,26 @@ const Dashboard = () => {
         ) : (
           <>
             {user && (
-              <Container style={{ marginBottom: '16px', minHeight: 'unset', padding: '16px' }}>
-                <div>
-                  <strong>{user.name}</strong>
-                  <p>
-                    Perfil atual:{' '}
-                    <strong style={{ color: getRoleColor(user.role) }}>
-                      {getRoleLabel(user.role)}
-                    </strong>
-                  </p>
-                  <p>Chamados visiveis: {visibleServices.length}</p>
-                </div>
-              </Container>
+              <div style={{ padding: '20px' }}>
+                <SummaryCards title='Resumo' items={[{
+                  label: "Usuário logado",
+                  value: (
+                    <>
+                      {user?.name}{' '}
+                      <strong style={{ color: getRoleColor(user.role) }}>
+                        ({getRoleLabel(user.role)})
+                      </strong>
+                    </>
+                  )
+                },
+                {
+                  label: "Chamados visíveis",
+                  value: <strong>{visibleServices.length}</strong>
+                }
+
+                ]} />
+              </div>
+
             )}
 
             {hasPermission('canCreateTicket') && (
@@ -163,55 +184,106 @@ const Dashboard = () => {
             )}
 
             <FilterBar>
-              <label htmlFor="clientFilter">Empresa</label>
-              <select
-                id="clientFilter"
-                value={selectedClient}
-                onChange={(event) => setSelectedClient(event.target.value)}
-              >
-                <option value="todos">Todas as empresas</option>
-                {clientOptions.map((client) => (
-                  <option key={client} value={client}>
-                    {client}
-                  </option>
-                ))}
-              </select>
+              <div className="filterGroup">
+                <label htmlFor="clientFilter">Empresa</label>
+                <select
+                  id="clientFilter"
+                  value={selectedClient}
+                  onChange={(event) => setSelectedClient(event.target.value)}
+                >
+                  <option value="todos">Todas as empresas</option>
+                  {clientOptions.map((client) => (
+                    <option key={client} value={client}>
+                      {client}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filterGroup">
+                <label htmlFor="statusFilter">Status</label>
+                <select
+                  id="statusFilter"
+                  value={selectedStatus}
+                  onChange={(event) => setSelectedStatus(event.target.value as 'todos' | ServiceStatus)}
+                >
+                  <option value="todos">Todos os status</option>
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filterGroup searchGroup">
+                <label htmlFor="searchFilter">Busca rapida</label>
+                <input
+                  id="searchFilter"
+                  type="text"
+                  placeholder="Buscar por cliente, assunto ou descricao"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
             </FilterBar>
 
-            {Object.entries(groupedServices).map(([client, chamados]) => (
-              <CompanySection key={client}>
-                <h2>{client}</h2>
-                <p>{chamados.length} chamado(s) registrado(s)</p>
+            <OverviewGrid>
+              <OverviewCard color={getStatusColor('Aberto')}>
+                <strong>{searchedServices.length}</strong>
+                <span>Chamados encontrados</span>
+              </OverviewCard>
+              <OverviewCard color={getStatusColor('Aberto')}>
+                <strong>{openCount}</strong>
+                <span>Em aberto</span>
+              </OverviewCard>
+              <OverviewCard color={getStatusColor('Progresso')}>
+                <strong>{inProgressCount}</strong>
+                <span>Em progresso</span>
+              </OverviewCard>
+              <OverviewCard color={getStatusColor('Atendido')}>
+                <strong>{attendedCount}</strong>
+                <span>Atendidos</span>
+              </OverviewCard>
+            </OverviewGrid>
 
+            <CompanySection>
+              <h2>Painel de chamados</h2>
+              <ResultsInfo>
+                Exibindo {paginatedServices.length} de {searchedServices.length} chamado(s) apos os filtros.
+              </ResultsInfo>
+
+              {searchedServices.length === 0 ? (
+                <p>Nenhum chamado encontrado com os filtros aplicados.</p>
+              ) : (
                 <Table>
                   <thead>
                     <tr>
                       <th scope="col">Cliente</th>
                       <th scope="col">Assunto</th>
                       <th scope="col">Status</th>
-                      <th scope="col">Cadastrado em...</th>
-                      <th scope="col">Atendido em...</th>
-                      <th scope="col">#</th>
+                      <th scope="col">Cadastrado em</th>
+                      <th scope="col">Atendido em</th>
+                      <th scope="col">Acoes</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {chamados.map((item) => (
+                    {paginatedServices.map((item) => (
                       <tr key={item.id}>
                         <td data-label="Cliente">{item.client}</td>
                         <td data-label="Assunto">{item.subject}</td>
                         <td data-label="Status">
                           <Badge label={item.status} color={getStatusColor(item.status)} />
                         </td>
-                        <td data-label="date">{formatDate(item.created)}</td>
+                        <td data-label="Cadastrado em">{formatDate(item.created)}</td>
                         <td data-label="Atendido em">{formatDate(item.attendedAt)}</td>
-                        <td data-label="date">{formatDate(item.created)}</td>
-                        <td data-label="Atendido em">{formatDate(item.attendedAt)}</td>
-                        <td data-label="#">
+                        <td data-label="Acoes">
                           <button
                             type="button"
                             className="action"
                             style={{ backgroundColor: '#098de5' }}
                             onClick={() => openModal(item)}
+                            aria-label={`Visualizar chamado de ${item.client}`}
                           >
                             <FaSearch size={17} color="#fff" />
                           </button>
@@ -220,6 +292,7 @@ const Dashboard = () => {
                               to={`/new/${item.id}`}
                               className="action"
                               style={{ backgroundColor: '#ff904d' }}
+                              aria-label={`Editar chamado de ${item.client}`}
                             >
                               <FaEdit size={17} color="#fff" />
                             </Link>
@@ -229,14 +302,16 @@ const Dashboard = () => {
                     ))}
                   </tbody>
                 </Table>
-              </CompanySection>
-            ))}
+              )}
+            </CompanySection>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+            {searchedServices.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </>
         )}
       </Content>
