@@ -70,6 +70,8 @@ export const Table = styled.table`
 
   th{
     text-transform: uppercase;
+    background-color: #333;
+    color: #f8f8f8;
   }
 
   td .badge{

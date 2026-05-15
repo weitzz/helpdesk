@@ -5,6 +5,9 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import Header from '../../components/Header'
 import Navbar from '../../components/Navbar'
+import FilterOptions from '../../components/Filters/Options'
+import FilterSearch from '../../components/Filters/Search'
+import { FiltersContainer } from '../../components/Filters/style'
 import { AuthContext } from '../../contexts/auth'
 import { usePermissions } from '../../hooks/usePermissions'
 import { database } from '../../services/firebaseConnection'
@@ -16,7 +19,6 @@ import {
   Container,
   ContainerBtn,
   Content,
-  FilterBar,
   ModalContent,
   ModalOverlay,
   ResultsInfo,
@@ -183,50 +185,31 @@ const Dashboard = () => {
               </ContainerBtn>
             )}
 
-            <FilterBar>
-              <div className="filterGroup">
-                <label htmlFor="clientFilter">Empresa</label>
-                <select
-                  id="clientFilter"
-                  value={selectedClient}
-                  onChange={(event) => setSelectedClient(event.target.value)}
-                >
-                  <option value="todos">Todas as empresas</option>
-                  {clientOptions.map((client) => (
-                    <option key={client} value={client}>
-                      {client}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="filterGroup">
-                <label htmlFor="statusFilter">Status</label>
-                <select
-                  id="statusFilter"
-                  value={selectedStatus}
-                  onChange={(event) => setSelectedStatus(event.target.value as 'todos' | ServiceStatus)}
-                >
-                  <option value="todos">Todos os status</option>
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="filterGroup searchGroup">
-                <label htmlFor="searchFilter">Busca rapida</label>
-                <input
-                  id="searchFilter"
-                  type="text"
-                  placeholder="Buscar por cliente, assunto ou descricao"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                />
-              </div>
-            </FilterBar>
+            <FiltersContainer>
+              <FilterOptions
+                id="clientFilter"
+                label="Empresa"
+                options={clientOptions}
+                selectedValue={selectedClient}
+                onChange={setSelectedClient}
+                defaultOptionLabel="Todas as empresas"
+              />
+              <FilterOptions
+                id="statusFilter"
+                label="Status"
+                options={statusOptions}
+                selectedValue={selectedStatus}
+                onChange={(value) => setSelectedStatus(value as 'todos' | ServiceStatus)}
+                defaultOptionLabel="Todos os status"
+              />
+              <FilterSearch
+                id="searchFilter"
+                label="Busca rapida"
+                searchTerm={searchTerm}
+                onSearch={setSearchTerm}
+                placeholder="Buscar por cliente, assunto ou descricao"
+              />
+            </FiltersContainer>
 
             <OverviewGrid>
               <OverviewCard color={getStatusColor('Aberto')}>

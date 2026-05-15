@@ -13,7 +13,7 @@ import { database, storage } from '../../services/firebaseConnection'
 import { Container, Content, FormProfile, LabelAvatar } from './style'
 
 const Profile = () => {
-  const { user, logout, setUser, storageUser } = useContext(AuthContext)
+  const { user, setUser, storageUser } = useContext(AuthContext)
   const [name, setName] = useState(user?.name ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? '')
@@ -140,7 +140,7 @@ const Profile = () => {
               <span>
                 <FaUpload color="#f7f7f7" size={25} />
               </span>
-              <input type="file" accept="image/*" onChange={handleFile} />
+              <Input type="file" accept="image/*" onChange={handleFile} />
               <img
                 src={previewUrl || avatarUrl || Avatar}
                 alt="Avatar do usuario"

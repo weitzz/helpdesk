@@ -29,6 +29,10 @@ export const StyledPagination = styled.div`
     padding: 8px 12px;
     cursor: pointer;
   }
+  button:hover:not(:disabled) {
+    background: #181c2e;
+    color: #fff;
+  }
 
   button.active {
     background: #181c2e;

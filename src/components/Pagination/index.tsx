@@ -1,4 +1,3 @@
-import React from 'react'
 import { StyledPagination } from './style'
 
 type PaginationProps = {
@@ -24,7 +23,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
             <span>
                 Pagina {currentPage} de {totalPages}
             </span>
-            <div>
+            <div className="pages">
                 <button
                     type="button"
                     disabled={currentPage === 1}
@@ -39,7 +38,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
                     onClick={handleNext}
                     aria-label="Próxima página"
                 >
-                    Proxima
+                    Próxima
                 </button>
             </div>
         </StyledPagination>

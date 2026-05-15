@@ -157,9 +157,35 @@ O projeto sera iniciado em `http://localhost:3000`.
 npm start
 npm test
 npm run build
+npm run storybook
+npm run build-storybook
 ```
 
 Observacao: os scripts usam `NODE_OPTIONS=--openssl-legacy-provider`, o que ajuda na compatibilidade com a stack atual baseada em `react-scripts` 4.
+
+## Storybook
+
+O projeto possui Storybook para documentar e validar componentes isoladamente.
+
+Para iniciar:
+
+```bash
+npm run storybook
+```
+
+O painel sera aberto em `http://localhost:6006`.
+
+Para gerar a versao esttica:
+
+```bash
+npm run build-storybook
+```
+
+As stories ficam proximas dos componentes, por exemplo:
+
+- `src/components/Button/Button.stories.tsx`
+- `src/components/Input/Input.stories.tsx`
+- `src/components/Badge/Badge.stories.tsx`
 
 ## Estrutura esperada no Firebase
 
